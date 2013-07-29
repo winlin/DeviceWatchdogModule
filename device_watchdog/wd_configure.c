@@ -80,19 +80,24 @@ struct wd_configure* get_wd_configure(void)
         }
     }
     /** load configure info from file */
-    char *line      = NULL;
-    size_t len      = 0;
-    ssize_t read    = 0;
-    while ((read = getline(&line, &len, configue_fp)) != -1) {
+    char *line    = calloc(WD_CONFIG_FILE_LINE_MAX_LEN, sizeof(char));
+    if (line == NULL) {
+        MITLog_DetErrPrintf("calloc() %s failed");
+        goto FREE_CONFIGURE_TAG;
+    }
+    ssize_t read  = 0;
+    while ((read = fscanf(configue_fp, "%[^\n]%*c", line)) != EOF) {
         /** strip the space char include:space, \f, \n, \r, \t, \v */
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Read line: %d : %s", read, line);
         read = strip_string_space(&line);
         /** ignore the empty line */
         if (read == 0) {
+            memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
             continue;
         }
         /** ignore the comments */
         if (line[0] == '#') {
+            memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
             continue;
         }
         /** get key and value */
@@ -208,10 +213,9 @@ struct wd_configure* get_wd_configure(void)
             }
             wd_conf->monitored_apps_count++;
         }
-    free(key_name);
-    free(value_str);
-    free(line);
-    line = NULL;
+        free(key_name);
+        free(value_str);
+        memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
     }
     fclose(configue_fp);
     return wd_conf;

@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define APP_NUMBER    "11"
+#define APP_NUMBER    "10"
 
 int main(int argc, const char * argv[])
 {

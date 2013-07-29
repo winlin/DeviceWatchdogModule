@@ -1,14 +1,23 @@
 WD_PROGNAME= watchdog
-APP_PROGNAME= app1
+APP_PROGNAME= app10
 
-CC = gcc
-DEFS= -D_GNU_SOURCE
-INCLUDES= -I.
-LIBS= -lpthread -levent
+#CC = gcc
+CC= arm-linux-androideabi-gcc
+
+CROSS_INCLUDE_PATH= /home/gtliu/AndroidSDK/android_libevent
+
+ifeq ($(CC),gcc)
+	INCLUDES= -I.
+	LIBS= -lpthread -levent
+else 
+	INCLUDES= -I$(CROSS_INCLUDE_PATH)/include/
+	LIBS= -L$(CROSS_INCLUDE_PATH)/lib/ -levent
+endif
 
 rm= /bin/rm -rf
 INSTALLDIR= /tmp/apps/
 
+DEFS= -D_GNU_SOURCE
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1
 CFLAGS= $(DEFINES) -Wall -O2 -std=gnu99 
 

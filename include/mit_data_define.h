@@ -11,11 +11,19 @@
 #include <string.h>
 #include <sys/types.h>
 
+
+
 /**
  * The max UDP package size.
  * The appname and cmdline sum length mustn't larger than it.
  */
-#define MAX_UDP_PG_SIZE                      512
+#define MAX_UDP_PG_SIZE                      1024
+
+/**
+ * The max line lenght.
+ * The appname and cmdline sum length mustn't larger than it.
+ */
+#define WD_CONFIG_FILE_LINE_MAX_LEN          1024
 
 /** If app not set feed period watchdog will use it. */
 #define DEFAULT_FEED_PERIOD                  15

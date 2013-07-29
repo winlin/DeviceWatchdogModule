@@ -1,27 +1,10 @@
-PROGNAME= watchdog
-CC = gcc
-DEFS= -D_GNU_SOURCE
-INCLUDES= -I.
-LIBS= -lpthread -levent
 
-rm= /bin/rm -rf
-INSTALLDIR= /tmp/apps/
-
-DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1
-CFLAGS= $(DEFINES) -Wall -O2 -std=gnu99 
-
-$(PROGNAME): mit_data_define.o mit_log_module.o watchdog_main.c wd_configure.c wd_configure.h 
-	$(CC) $(CFLAGS) mit_data_define.o mit_log_module.o watchdog_main.c wd_configure.c -o $(PROGNAME) $(LIBS)
-
-mit_data_define.o: ../src/mit_data_define.c ../include/mit_data_define.h ../include/mit_log_module.h 
-	$(CC) $(CFLAGS) -c ../src/mit_data_define.c ../include/mit_log_module.h $(LIBS)
-
-mit_log_module.o: ../src/mit_log_module.c ../include/mit_data_define.h ../include/mit_log_module.h 
-	$(CC) $(CFLAGS) -c ../src/mit_log_module.c ../include/mit_data_define.h $(LIBS)
+$(WD_PROGNAME): ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) watchdog_main.c wd_configure.c wd_configure.h 
+	$(CC) $(CFLAGS) ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) watchdog_main.c wd_configure.c -o $(WD_PROGNAME) $(LIBS)
 
 install:
 	mkdir -p $(INSTALLDIR)
-	cp $(PROGNAME) $(INSTALLDIR)
+	cp $(WD_PROGNAME) $(INSTALLDIR)
 
 clean:
-	$(rm) *.o *.gch *.d $(PROGNAME) 
+	$(rm) *.o *.gch *.d $(WD_PROGNAME) 

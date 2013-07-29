@@ -202,7 +202,10 @@ void MITLogWriteFile(MITLogFileIndex aryIndex, char *msgStr, long long msgSize)
         }
         fclose(nextStoreFP);
         // empty the origin file this step MUST be executed.
-        ftruncate(fileno(originFilePointers[aryIndex]), 0);
+        int ret = ftruncate(fileno(originFilePointers[aryIndex]), 0);
+        if (ret == -1) {
+            MIT_derrprintf("ftruncate() failed:");          
+        }
     }
     
     // 3. write buffer into origin file

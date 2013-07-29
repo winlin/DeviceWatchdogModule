@@ -16,7 +16,10 @@ int main(int argc, const char * argv[])
     MITLogOpen("UDPClinet", "/tmp/logs/app"APP_NUMBER);
     
     char dir[1024];
-    getcwd(dir, sizeof(dir));
+    char *cwd_char = getcwd(dir, sizeof(dir));
+    if (cwd_char == NULL) {
+        MITLog_DetErrPrintf("getcwd() failed");
+    }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
     
     struct feed_thread_configure th_conf;

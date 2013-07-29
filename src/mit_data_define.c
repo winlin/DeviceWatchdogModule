@@ -351,7 +351,12 @@ long long int get_pid_with_comm(const char *comm)
         MITLog_DetErrPrintf("fopen() %s falied", SYS_PROC_MAX_PID_FILE);
         return app_pid;
     }
-    fscanf(max_pid_file, "%lld", &sys_max_pid);
+    int scan_num = fscanf(max_pid_file, "%lld", &sys_max_pid);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() failed");
+        return app_pid;
+    }
+
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get System Max PID:%lld", sys_max_pid);
     fclose(max_pid_file);
     for (long long int i=1; i <= sys_max_pid; ++i) {
@@ -369,7 +374,10 @@ long long int get_pid_with_comm(const char *comm)
             }
         }
         char app_comm[60] = {0};
-        fscanf(comm_fp, "%s", app_comm);
+        scan_num = fscanf(comm_fp, "%s", app_comm);
+        if (scan_num <= 0) {
+            MITLog_DetErrPrintf("fscanf() %s failed", app_comm_path);
+        }
         fclose(comm_fp);
         if (strcmp(comm, app_comm) == 0) {
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Find the target app pid:%lld", i);

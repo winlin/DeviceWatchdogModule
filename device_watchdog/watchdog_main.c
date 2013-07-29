@@ -29,7 +29,10 @@ int main(int argc, const char * argv[])
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
     
     char dir[1024];
-    getcwd(dir, sizeof(dir));
+    char *cwd_char = getcwd(dir, sizeof(dir));
+    if (cwd_char == NULL) {
+        MITLog_DetErrPrintf("getcwd() failed");
+    }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
     
     struct wd_configure *wd_conf = get_wd_configure();

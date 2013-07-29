@@ -8,7 +8,7 @@ rm= /bin/rm -rf
 INSTALLDIR= /tmp/apps/
 
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1
-CFLAGS= $(DEFINES) -Wall -std=gnu99 -MD -MP
+CFLAGS= $(DEFINES) -Wall -O2 -std=gnu99 -MD -MP
 
 $(PROGNAME): mit_data_define.o mit_log_module.o watchdog_main.c wd_configure.c wd_configure.h 
 	$(CC) $(CFLAGS) mit_data_define.o mit_log_module.o watchdog_main.c wd_configure.c -o $(PROGNAME) $(LIBS)

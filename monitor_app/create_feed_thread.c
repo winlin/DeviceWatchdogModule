@@ -58,10 +58,11 @@ void wd_send_register_pg(evutil_socket_t fd)
     if (fp == NULL) {
         return;
     }
-    char wd_port_char[16] = {0};
     int wd_port = 0;
-    fread(wd_port_char, sizeof(char), sizeof(wd_port_char), fp);
-    sscanf(wd_port_char, "%d", &wd_port);
+    int scan_num = fscanf(fp, "%d", &wd_port);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() failed");
+    }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Watchdog port:%d", wd_port);
     if (wd_port > 0) {
         memset(&addr_server, 0, sizeof(addr_server));

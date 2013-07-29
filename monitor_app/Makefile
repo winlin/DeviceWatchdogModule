@@ -1,5 +1,5 @@
 $(APP_PROGNAME): ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) app_main.c create_feed_thread.c create_feed_thread.h 
-	$(CC) $(CFLAGS) ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) app_main.c create_feed_thread.c -o $(APP_PROGNAME) $(LIBS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 install:
 	mkdir -p $(INSTALLDIR)

@@ -1,4 +1,8 @@
 #!/bin/sh
+mkdir -p /tmp/watchdog
+mkdir -p /tmp/logs
+mkdir -p /tmp/apps
+
 clear
 while true ; do
 	#statements

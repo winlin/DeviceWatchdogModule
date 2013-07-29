@@ -5,6 +5,7 @@ INCLUDES= -I.
 LIBS= -lpthread -levent
 
 rm= /bin/rm -rf
+INSTALLDIR= /tmp/apps/
 
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1
 CFLAGS= $(DEFINES) -Wall -std=gnu99 -MD -MP
@@ -17,6 +18,10 @@ mit_data_define.o: ../src/mit_data_define.c ../include/mit_data_define.h ../incl
 
 mit_log_module.o: ../src/mit_log_module.c ../include/mit_data_define.h ../include/mit_log_module.h 
 	$(CC) $(CFLAGS) -c ../src/mit_log_module.c ../include/mit_data_define.h $(LIBS)
+
+install:
+	mkdir -p $(INSTALLDIR)
+	cp $(PROGNAME) $(INSTALLDIR)
 
 clean:
 	$(rm) *.o *.gch *.d $(PROGNAME)

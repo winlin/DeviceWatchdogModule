@@ -7,7 +7,7 @@ clear
 while true ; do
 	#statements
 	echo "==================== PS INFO ======================"
-	 ps -eo pid,ppid,comm,pcpu | egrep "watchdog|app[0-9]"
+	 ps | egrep "watchdog|app[0-9]"
 
 	echo "================= WATCHDOG INFO ==================="
 	echo ">>>>>>>COMM LEVEL LOG"

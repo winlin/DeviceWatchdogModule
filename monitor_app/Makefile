@@ -8,7 +8,7 @@ rm= /bin/rm -rf
 INSTALLDIR= /tmp/apps/
 
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1
-CFLAGS= $(DEFINES) -Wall -O2 -std=gnu99 -MD -MP
+CFLAGS= $(DEFINES) -Wall -O2 -std=gnu99
 
 $(PROGNAME): mit_data_define.o mit_log_module.o app_main.c create_feed_thread.c create_feed_thread.h 
 	$(CC) $(CFLAGS) mit_data_define.o mit_log_module.o app_main.c create_feed_thread.c -o $(PROGNAME) $(LIBS)

@@ -8,7 +8,7 @@
 #ifndef DeviceWatchdog_wd_configure_h
 #define DeviceWatchdog_wd_configure_h
 
-#include "include/mit_data_define.h"
+#include "../include/mit_data_define.h"
 #include <time.h>
 #include <unistd.h>
 

@@ -24,7 +24,7 @@
 #ifndef MITLogMoudle_H
 #define MITLogMoudle_H
 
-#include "include/mit_data_define.h"
+#include "mit_data_define.h"
 #include <string.h>
 #include <errno.h>
 /** debug switch macro */

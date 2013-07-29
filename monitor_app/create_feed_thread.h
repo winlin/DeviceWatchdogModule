@@ -8,8 +8,8 @@
 #ifndef CREATE_FEED_THREAD_H
 #define CREATE_FEED_THREAD_H
 
-#include "include/mit_log_module.h"
-#include "include/mit_data_define.h"
+#include "../include/mit_log_module.h"
+#include "../include/mit_data_define.h"
 #include <sys/types.h>
 
 /**

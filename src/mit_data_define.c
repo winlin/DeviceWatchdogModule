@@ -5,8 +5,8 @@
 //  Copyright (c) 2013 GT. All rights reserved.
 //
 
-#include "include/mit_data_define.h"
-#include "include/mit_log_module.h"
+#include "../include/mit_data_define.h"
+#include "../include/mit_log_module.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

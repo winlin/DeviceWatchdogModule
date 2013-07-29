@@ -29,7 +29,7 @@
 #define MITLogExit
 #endif
 
-#include "include/mit_log_module.h"
+#include "../include/mit_log_module.h"
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -239,6 +239,7 @@ static inline MITLogFileIndex MITGetIndexForLevel(MITLogLevel level)
         default:
             break;
     }
+    return MITLOG_INDEX_COMM_FILE;
 }
 
 /*************************** MITLog Module Function ********************************/

@@ -403,22 +403,14 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
         pthread_rwlock_unlock(&bufferRWlock);
         
         pthread_rwlock_rdlock(&bufferRWlock);
-        // 1. flush the buffer
+        // 1. write the buffer into file
         long long firstLen = strlen(logFileBuffer[aryIndex]);
         MITLogWriteFile(aryIndex, logFileBuffer[aryIndex], firstLen);
         pthread_rwlock_unlock(&bufferRWlock);
         
         pthread_rwlock_wrlock(&bufferRWlock);
-        long long secondLen = strlen(logFileBuffer[aryIndex]);
-        long long subNum = secondLen - firstLen;
-        if (subNum == 0) {
-            // empty the buffer
-            memset(logFileBuffer[aryIndex], 0, firstLen);
-        } else if(subNum > 0){
-            memset(logFileBuffer[aryIndex], 0, firstLen);
-            memmove(logFileBuffer[aryIndex], logFileBuffer[aryIndex]+firstLen, subNum);
-            memset(logFileBuffer[aryIndex]+subNum, 0, MITLogBufferMaxSize[aryIndex]-subNum);
-        }
+        // empty the buffer
+        memset(logFileBuffer[aryIndex], 0, MITLogBufferMaxSize[aryIndex]);
         // 2. write into origin file or buffer
         if (sumLen < MITLogBufferMaxSize[aryIndex]) {
             // write into buffer

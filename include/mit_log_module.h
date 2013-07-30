@@ -56,12 +56,12 @@ typedef enum MITLogMaxSize {
     MITLOG_MAX_LOG_FILE_LEN          = 50,            // log file name max length
     MITLOG_MAX_FILE_SIZE             = 1024*1024*2,   /* 2MB not very exact as for system alloc
                                                        * disk space not by bytes(exp 4KB) */
-    MITLOG_MAX_COMM_FILE_NUM         = 1,             // common type file num: appName.comm.1
-    MITLOG_MAX_WARN_FILE_NUM         = 10,            // warning type file num: appName.warn.1 -- appName.warn.10
-    MITLOG_MAX_ERROR_FILE_NUM        = 10,            // error type file num: appName.error.1 -- appName.error.10
+    MITLOG_MAX_COMM_FILE_NUM         = 10,             // common type file num: appName.comm.1
+    MITLOG_MAX_WARN_FILE_NUM         = 5,            // warning type file num: appName.warn.1 -- appName.warn.10
+    MITLOG_MAX_ERROR_FILE_NUM        = 5,            // error type file num: appName.error.1 -- appName.error.10
     MITLOG_MAX_COMM_BUFFER_SIZE      = 512,           // 4KB
-    MITLOG_MAX_WARN_BUFFER_SIZE      = 512,           // 1KB
-    MITLOG_MAX_ERROR_BUFFER_SIZE     = 512            // 1KB
+    MITLOG_MAX_WARN_BUFFER_SIZE      = 0,           // 1KB
+    MITLOG_MAX_ERROR_BUFFER_SIZE     = 0            // 1KB
 }MITLogMaxSize;
 
 /**

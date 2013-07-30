@@ -1,8 +1,8 @@
 WD_PROGNAME= watchdog
-APP_PROGNAME= app10
+APP_PROGNAME= app8
 
-#CC = gcc
-CC= arm-linux-androideabi-gcc
+CC=gcc
+#CC=arm-linux-androideabi-gcc
 
 CROSS_INCLUDE_PATH= /home/gtliu/AndroidSDK/android_libevent
 

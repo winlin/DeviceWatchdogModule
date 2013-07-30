@@ -113,6 +113,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
             struct stat tstat;
             if (stat(logfilepath, &tstat) < 0) {
                 MIT_derrprintf("stat() %s faild", logfilepath);
+                closedir(dirfd);
                 return MIT_RETV_FAIL;
             } else {
                 *fileSize = tstat.st_size;
@@ -129,6 +130,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
             struct stat tstat;
             if (stat(logfilepath, &tstat) < 0) {
                 MIT_derrprintf("stat() %s faild", logfilepath);
+                closedir(dirfd);
                 return MIT_RETV_FAIL;
             }
             if (minModifyTime == 0 || tstat.st_mtime < minModifyTime) {
@@ -146,6 +148,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
 				 MITLogFileSuffix[aryIndex], currentMaxFileNum);
     }
     MIT_dprintf("currentMaxFileNum:%d  nextStoreFile:%s", currentMaxFileNum, nextStoreFile);
+
     closedir(dirfd);
    
     return MIT_RETV_SUCCESS;

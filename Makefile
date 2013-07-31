@@ -1,5 +1,5 @@
-WD_PROGNAME= watchdog
-APP_PROGNAME= app8
+WD_PROGNAME= dev_watchdog
+APP_PROGNAME= app10
 
 CC=gcc
 #CC=arm-linux-androideabi-gcc
@@ -15,7 +15,7 @@ else
 endif
 
 rm= /bin/rm -rf
-INSTALLDIR= /tmp/apps/
+INSTALLDIR= /data/apps/
 
 DEFS= -D_GNU_SOURCE
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1

@@ -624,7 +624,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
         
         if (now_time > app_final_time) {
             MITLog_DetPrintf(MITLOG_LEVEL_WARNING,
-                             "app:%d need to be restarted\n cmdline:%s",
+                             "app(old pid:%d) need to be restarted\n cmdline:%s",
                              tmp->app_info.app_pid,
                              tmp->app_info.cmd_line);
             /** update the last feed time to avoid doubly starting the app */

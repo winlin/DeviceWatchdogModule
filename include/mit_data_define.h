@@ -41,11 +41,13 @@
 #define MAX_MISS_FEEDBACK_TIMES              (DEFAULT_MAX_MISSED_FEED_TIMES - 1)
 
 /** The path must end with '/' */
+/** Use to store all applications' log files */
+#define LOG_FILE_PATH                  "/data/logs/"
 /** Use to store watchdog's configure file. */
-#define WD_FILE_PATH_APP                "/tmp/watchdog/"
+#define WD_FILE_PATH_APP                "/data/watchdog/"
 
 /** Use to store watchdog's log files. */
-#define WD_FILE_PATH_LOG                "/tmp/logs/watchdog"
+#define WD_FILE_PATH_LOG                LOG_FILE_PATH"watchdog"
 
 /** The name of watchdog's configure file. */
 #define WD_FILE_NAME_CONFIGURE          "watchdog.cfg"

@@ -9,11 +9,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define APP_NUMBER    "8"
+#define APP_NUMBER    "10"
 
 int main(int argc, const char * argv[])
 {
-    MITLogOpen("UDPClinet", "/tmp/logs/app"APP_NUMBER);
+    MITLogOpen("UDPClient", LOG_FILE_PATH"app"APP_NUMBER);
     
     char dir[1024];
     char *cwd_char = getcwd(dir, sizeof(dir));
@@ -23,7 +23,7 @@ int main(int argc, const char * argv[])
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
     
     struct feed_thread_configure th_conf;
-    th_conf.cmd_line = "/tmp/apps/app"APP_NUMBER;
+    th_conf.cmd_line = "/data/apps/app"APP_NUMBER;
     th_conf.app_name = "app"APP_NUMBER;
     th_conf.feed_period = 3;
     th_conf.monitored_pid = getpid();

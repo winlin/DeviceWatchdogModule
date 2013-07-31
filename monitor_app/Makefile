@@ -3,7 +3,7 @@ $(APP_PROGNAME): ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) app_ma
 
 install:
 	mkdir -p $(INSTALLDIR)
-	cp $(APP_PROGNAME) $(INSTALLDIR)
+	cp -f $(APP_PROGNAME) $(INSTALLDIR)
 
 clean:
 	$(rm) *.o *.gch *.d $(APP_PROGNAME)

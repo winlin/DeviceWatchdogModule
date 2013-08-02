@@ -63,6 +63,7 @@ void print_wd_configure(struct wd_configure *wd_conf);
 void free_wd_configure(struct wd_configure *wd_conf);
 
 /**
+ * Start the watchdog function
  */
 MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf);
 

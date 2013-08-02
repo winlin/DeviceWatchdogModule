@@ -11,7 +11,11 @@
 #include <string.h>
 #include <sys/types.h>
 
-
+/**
+ * The interval of watchdog check apps's alive.
+ * Unit is second.
+ */
+#define WD_CHECK_TIME_INTERVAL               1
 
 /**
  * The max UDP package size.

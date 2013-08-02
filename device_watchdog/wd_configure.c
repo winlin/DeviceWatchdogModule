@@ -343,12 +343,12 @@ MITFuncRetValue unregister_monitored_app(struct wd_pg_action *action_pg)
     return MIT_RETV_FAIL;
 }
 
-MITFuncRetValue add_monitored_app(struct wd_pg_register *reg_pg)
+MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
 {
     if (reg_pg == NULL) {
-        return MIT_RETV_PARAM_EMPTY;
+        return WD_PG_ERR_REGISTER_FAIL;
     }
-    int ret = MIT_RETV_SUCCESS;
+    int ret = WD_PG_ERR_SUCCESS;
     
     /** Check whether the app has been registered
      *  If it has existed just update the app_last_feed_time.
@@ -365,7 +365,7 @@ MITFuncRetValue add_monitored_app(struct wd_pg_register *reg_pg)
                 tmp->app_info.cmd_line = calloc(reg_pg->cmd_len+1, sizeof(char));
                 if (tmp->app_info.cmd_line == NULL) {
                     MITLog_DetErrPrintf("calloc() failed");
-                    ret = MIT_RETV_ALLOC_MEM_FAIL;
+                    ret = WD_PG_ERR_REGISTER_FAIL;
                     goto ERR_RETURN_TAG;
                 } else {
                     strncpy(tmp->app_info.cmd_line, reg_pg->cmd_line, reg_pg->cmd_len);
@@ -379,13 +379,13 @@ MITFuncRetValue add_monitored_app(struct wd_pg_register *reg_pg)
     struct monitor_app_info_node *node = calloc(1, sizeof(struct monitor_app_info_node));
     if (node == NULL) {
         MITLog_DetErrPrintf("calloc() failed");
-        ret = MIT_RETV_ALLOC_MEM_FAIL;
+        ret = WD_PG_ERR_REGISTER_FAIL;
         goto ERR_RETURN_TAG;
     }
     node->app_info.cmd_line = calloc(reg_pg->cmd_len + 1, sizeof(char));
     if (node->app_info.cmd_line == NULL) {
         MITLog_DetErrPrintf("calloc() failed");
-        ret = MIT_RETV_ALLOC_MEM_FAIL;
+        ret = WD_PG_ERR_REGISTER_FAIL;
         goto FREE_NODE_TAG;
     }
     strncpy(node->app_info.cmd_line, reg_pg->cmd_line, reg_pg->cmd_len);
@@ -393,7 +393,7 @@ MITFuncRetValue add_monitored_app(struct wd_pg_register *reg_pg)
     node->app_info.app_name = calloc(reg_pg->name_len + 1, sizeof(char));
     if (node->app_info.app_name == NULL) {
         MITLog_DetErrPrintf("calloc() failed");
-        ret = MIT_RETV_ALLOC_MEM_FAIL;
+        ret = WD_PG_ERR_REGISTER_FAIL;
         free(node->app_info.cmd_line);
         goto FREE_NODE_TAG;
     }
@@ -457,7 +457,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
         
         if (len > 0) {
             short cmd = wd_get_net_package_cmd(msg);
-            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Server CMD:%d", cmd);
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Client CMD:%d", cmd);
             if (cmd == WD_PG_CMD_REGISTER) {
                 struct wd_pg_register *reg_pg = wd_pg_register_unpg(msg, (int)len);
                 if (reg_pg == NULL) {
@@ -469,25 +469,24 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                     }
                 } else {
                     MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
-                                     "\nPID:%d  PERIOD:%d\nAPPNAME:%s\nCMD:%s",
+                                     "\nGet Client Register Package:\nPID:%d  PERIOD:%d\nAPPNAME:%s\nCMD:%s",
                                      reg_pg->pid, reg_pg->period,
                                      reg_pg->app_name, reg_pg->cmd_line);
                     /** add app info into struct wd_configure.apps_list_head */
-                    MITFuncRetValue ret = 0;
-                    if((ret=add_monitored_app(reg_pg)) != MIT_RETV_SUCCESS) {
+                    MITWatchdogPgError ret = 0;
+                    if((ret=add_monitored_app(reg_pg)) != WD_PG_ERR_SUCCESS) {
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "add_monitored_app() failed:%d", ret);
+                    } else {
+                        print_wd_configure(wd_configure);
                     }
-                    print_wd_configure(wd_configure);
-                    
                     /** send register success package */
-                    ret = send_pg_back(fd, &src_addr, WD_PG_CMD_REGISTER, WD_PG_ERR_SUCCESS);
+                    ret = send_pg_back(fd, &src_addr, WD_PG_CMD_REGISTER, ret);
                     if (ret != MIT_RETV_SUCCESS) {
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_pg_back() failed");
                     }
                     free(reg_pg);
                 }
             } else if (cmd == WD_PG_CMD_FEED) {
-                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Feed Cmd");
                 struct wd_pg_action *feed_pg = wd_pg_action_unpg(msg, (int)len);
                 /** send feed back package */
                 if (feed_pg == NULL) {
@@ -498,6 +497,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_pg_back() failed");
                     }
                 } else {
+                    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Feed Cmd: PID:%d", feed_pg->pid);
                     MITWatchdogPgError err_num = WD_PG_ERR_SUCCESS;
                     if (update_monitored_app_time(feed_pg) != MIT_RETV_SUCCESS) {
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_monitored_app_time() \
@@ -723,7 +723,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     /** Add timer event */
     event_assign(&timeout, ev_base, -1, EV_PERSIST, timeout_cb, &timeout);
     evutil_timerclear(&tv);
-    tv.tv_sec = 1;
+    tv.tv_sec = WD_CHECK_TIME_INTERVAL;
     event_add(&timeout, &tv);
     
     event_base_dispatch(ev_base);

@@ -17,6 +17,14 @@ while true ; do
 	echo ">>>>>>>ERROR LEVEL LOG"
 	tail /data/logs/watchdog/DeviceWatchdog.err
 	echo "==================================================="
+
+	#check for when more apps will be started error is occour
+	apps_num=`ps -A -ocomm,pid,ppid,pcpu | egrep "dev_watchdog|app[0-9]" | wc -l`
+	echo "apps_num=$apps_num"
+	if [[ $apps_num > 11 ]]; then
+		killall dev_watchdog
+		exit
+	fi
 	sleep 1
 	clear
 done

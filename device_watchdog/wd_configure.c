@@ -86,12 +86,15 @@ struct wd_configure* get_wd_configure(void)
         goto FREE_CONFIGURE_TAG;
     }
     ssize_t read  = 0;
-    while ((read = fscanf(configue_fp, "%[^\n]%*c", line)) != EOF) {
-        /** strip the space char include:space, \f, \n, \r, \t, \v */
+    while ((read = fscanf(configue_fp, "%[^\n]", line)) != EOF) {
+        /** eat the \n char */
+        fgetc(configue_fp);
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Read line: %d : %s", read, line);
+        /** strip the space char include:space, \f, \n, \r, \t, \v */
         read = strip_string_space(&line);
         /** ignore the empty line */
         if (read == 0) {
+            MITLog_DetPuts(MITLOG_LEVEL_COMMON, "111111");
             memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
             continue;
         }
@@ -480,8 +483,8 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                         print_wd_configure(wd_configure);
                     }
                     /** send register success package */
-                    ret = send_pg_back(fd, &src_addr, WD_PG_CMD_REGISTER, ret);
-                    if (ret != MIT_RETV_SUCCESS) {
+                    MITFuncRetValue r_ret = send_pg_back(fd, &src_addr, WD_PG_CMD_REGISTER, ret);
+                    if (r_ret != MIT_RETV_SUCCESS) {
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_pg_back() failed");
                     }
                     free(reg_pg);
@@ -545,6 +548,10 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
 
 void start_the_monitor_app(struct monitor_app_info *app_info)
 {
+    MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
+                         "process:%d will be killed and execvp(%s)",
+                         app_info->app_pid,
+                         app_info->cmd_line);
     /** at first kill that app */
     if (app_info->app_pid > 0) {
         int ret = kill(app_info->app_pid, SIGKILL);
@@ -600,7 +607,7 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
         exit(EXIT_SUCCESS);
     } else if (pid > 0) {
         app_info->app_pid = pid;
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
                          "child process:%d will execvp(%s)",
                          pid,
                          app_info->cmd_line);

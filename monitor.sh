@@ -21,7 +21,7 @@ while true ; do
 	#check for when more apps will be started error is occour
 	apps_num=`ps -A -ocomm,pid,ppid,pcpu | egrep "dev_watchdog|app[0-9]" | wc -l`
 	echo "apps_num=$apps_num"
-	if [[ $apps_num > 11 ]]; then
+	if [[ $apps_num -gt 11 ]]; then
 		killall dev_watchdog
 		exit
 	fi

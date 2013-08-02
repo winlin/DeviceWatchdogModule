@@ -218,6 +218,7 @@ struct wd_configure* get_wd_configure(void)
         memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
     }
     fclose(configue_fp);
+    free(line);
     return wd_conf;
 
 FREE_LINE_TAG:
@@ -546,7 +547,7 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
 {
     /** at first kill that app */
     if (app_info->app_pid > 0) {
-        int ret = kill(app_info->app_pid, SIGSTOP);
+        int ret = kill(app_info->app_pid, SIGKILL);
         if (ret < 0) {
             MITLog_DetErrPrintf("kill() process:%d failed", app_info->app_pid);
         }
@@ -645,12 +646,15 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
             if ((exist_flag = access(update_lock_file, F_OK)) < 0) {
                 if (errno != ENOENT) {
                     MITLog_DetErrPrintf("access() %s failed", update_lock_file);
+                    free(update_lock_file);
                     continue;
                 }
             } else if (exist_flag == 0) {
                 MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s is updating", tmp->app_info.app_name);
+                free(update_lock_file);
                 continue;
             }
+            free(update_lock_file);
             /** start the app again */
             start_the_monitor_app(&tmp->app_info);
         }

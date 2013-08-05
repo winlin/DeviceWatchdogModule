@@ -13,7 +13,7 @@
 /** the app name */
 #define MONITOR_APP_NAME               "app1"
 /** app's version number */
-#define VERSION_UPAPPSD                "v1.0.1"
+#define VERSION_MONITOR_APP            "v1.0.1"
 
 int main(int argc, const char * argv[])
 {
@@ -41,7 +41,7 @@ int main(int argc, const char * argv[])
         goto CLOSE_LOG_TAG;
     }
     /** save verson info */
-    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
+    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_MONITOR_APP) != MIT_RETV_SUCCESS) {
         MITLog_DetErrPrintf("save_app_conf_info() %s failed", MONITOR_APP_NAME F_NAME_COMM_VERSON);
         ret = -1;
         goto CLOSE_LOG_TAG;
@@ -49,7 +49,7 @@ int main(int argc, const char * argv[])
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Start the feed thread:cmd=%s", th_conf.cmd_line);
     create_feed_thread(&th_conf);
-    int i = 0;
+    
     while (1) {
         MITLog_DetPuts(MITLOG_LEVEL_COMMON, "The main thread rotate one time per 3 seconds");
         sleep(3);

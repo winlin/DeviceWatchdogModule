@@ -6,10 +6,12 @@
 //  Copyright (c) 2013 GT. All rights reserved.
 //
 
+#include "../include/mit_log_module.h"
 #include "up_apps_module.h"
-#include "include/mit_log_module.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <event2/event.h>
 #include <event2/event_struct.h>
 #include <event2/util.h>

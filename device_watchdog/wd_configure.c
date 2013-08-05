@@ -36,8 +36,6 @@
 
 static struct wd_configure *wd_configure;
 static struct sockaddr_in addr_self;
-static struct event timeout;
-static struct timeval tv;
 
 struct wd_configure* get_wd_configure(void)
 {
@@ -625,7 +623,9 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
 {
     waitpid(-1, NULL, WNOHANG);
     /** check every app and decide whether special app should be restarted */
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Current Monitored App Count:%d", wd_configure->monitored_apps_count);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, 
+                     "Current Monitored App Count:%d", 
+                     wd_configure->monitored_apps_count);
     struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
     for (; tmp; tmp=tmp->next_node) {
         time_t now_time         = time(NULL);
@@ -678,6 +678,8 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
 MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
 {
     MITLog_DetLogEnter
+
+    MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
     if (wd_conf == NULL) {
         return MIT_RETV_PARAM_EMPTY;
     }
@@ -686,6 +688,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     int socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_fd < 0) {
         MITLog_DetErrPrintf("socket() failed");
+        func_ret = MIT_RETV_OPEN_FILE_FAIL;
         goto FUNC_EXIT_TAG;
     }
     
@@ -705,11 +708,13 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     
     if (bind(socket_fd, (struct sockaddr*)&addr_self, sizeof(addr_self)) < 0) {
         MITLog_DetErrPrintf("bind() failed");
+        func_ret = MIT_RETV_FAIL;
         goto CLOSE_FD_TAG;
     }
     socklen_t addr_len = sizeof(addr_self);
     if (getsockname(socket_fd, (struct sockaddr *)&addr_self, &addr_len) < 0) {
         MITLog_DetErrPrintf("getsockname() failed");
+        func_ret = MIT_RETV_FAIL;
         goto CLOSE_FD_TAG;
     }
     /** save port info */
@@ -718,11 +723,13 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     sprintf(port_str, "%d", ntohs(addr_self.sin_port));
     if(save_app_conf_info(APP_NAME_WATCHDOG, F_NAME_COMM_PORT, port_str) != MIT_RETV_SUCCESS) {
         MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", APP_NAME_WATCHDOG, F_NAME_COMM_PORT);
+        func_ret = MIT_RETV_FAIL;
         goto CLOSE_FD_TAG;
     }
     struct event_base *ev_base = event_base_new();
     if (!ev_base) {
         MITLog_DetErrPrintf("event_base_new() failed");
+        func_ret = MIT_RETV_FAIL;
         goto CLOSE_FD_TAG;
     }
     
@@ -731,9 +738,12 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     event_assign(&socket_ev_r, ev_base, socket_fd, EV_READ|EV_PERSIST, socket_ev_r_cb, &socket_ev_r);
     if (event_add(&socket_ev_r, NULL) < 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "couldn't add an event");
+        func_ret = MIT_RETV_FAIL;
         goto EVENT_BASE_FREE_TAG;
     }
     /** Add timer event */
+    struct event timeout;
+    struct timeval tv;
     event_assign(&timeout, ev_base, -1, EV_PERSIST, timeout_cb, &timeout);
     evutil_timerclear(&tv);
     tv.tv_sec = WD_CHECK_TIME_INTERVAL;
@@ -741,14 +751,13 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     
     event_base_dispatch(ev_base);
     
-    MITLog_DetLogExit
-    
 EVENT_BASE_FREE_TAG:
     event_base_free(ev_base);
 CLOSE_FD_TAG:
     close(socket_fd);
 FUNC_EXIT_TAG:
-    return MIT_RETV_FAIL;
+    MITLog_DetLogExit
+    return func_ret;
 }
 
 

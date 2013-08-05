@@ -1,5 +1,6 @@
 WD_PROGNAME=dev_watchdog
 APP_PROGNAME=app10
+UPAPP_PROGNAME=update_apps_daemon
 
 CC=gcc
 #CC=arm-linux-androideabi-gcc
@@ -30,7 +31,7 @@ MAKE= make
 export
 
 
-all: $(COMM_FILE_TAR) $(WD_PROGNAME) $(APP_PROGNAME)
+all: $(COMM_FILE_TAR) $(WD_PROGNAME) $(APP_PROGNAME) $(UPAPP_PROGNAME)
 
 $(COMM_FILE_TAR):
 	$(MAKE) -C src
@@ -41,11 +42,16 @@ $(WD_PROGNAME): $(COMM_FILE_TAR)
 $(APP_PROGNAME): $(COMM_FILE_TAR)
 	$(MAKE) -C monitor_app
 
+$(UPAPP_PROGNAME): $(COMM_FILE_TAR)
+	$(MAKE) -C update_app
+
 install:
 	$(MAKE) install -C monitor_app
 	$(MAKE) install -C device_watchdog
-
+	$(MAKE) install -C update_app
 clean:
 	 $(MAKE) clean -C src
 	 $(MAKE) clean -C monitor_app
 	 $(MAKE) clean -C device_watchdog
+	 $(MAKE) clean -C update_app
+

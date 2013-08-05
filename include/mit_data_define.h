@@ -44,27 +44,31 @@
  */
 #define MAX_MISS_FEEDBACK_TIMES              (DEFAULT_MAX_MISSED_FEED_TIMES - 1)
 
-/** The path must end with '/' */
-/** Use to store all applications' log files */
-#define LOG_FILE_PATH                  "/data/logs/"
+/** 
+ * The path must end with '/'. 
+ * Please make sure these path exist. 
+ */
+/** The apps' common path */
+#define APP_COMM_PATH                  "/data/"
+/** Use to store all apps' log files */
+#define LOG_FILE_PATH                  APP_COMM_PATH"logs/"
+/** Use to store all apps' configure files */
+#define APP_CONF_PATH                  APP_COMM_PATH"configure/"
+/** The default file name of app's info of pid */
+#define F_NAME_COMM_PID                "pid"
+/** The default file name of app's info of port */
+#define F_NAME_COMM_PORT               "port"
+/** The default file name of app's configure */
+#define F_NAME_COMM_CONF               "configure.cfg"
+
 /** Use to store watchdog's configure file. */
-#define WD_FILE_PATH_APP                "/data/watchdog/"
-
+#define CONF_PATH_WATCHD               APP_CONF_PATH"watchdog/"
 /** Use to store watchdog's log files. */
-#define WD_FILE_PATH_LOG                LOG_FILE_PATH"watchdog"
-
-/** The name of watchdog's configure file. */
-#define WD_FILE_NAME_CONFIGURE          "watchdog.cfg"
-
-/** The name of watchdog exported port file name. */
-#define WD_FILE_NAME_PORT               "port"
-
-/** The name of watchdog exported pid file name. */
-#define WD_FILE_NAME_PID                "pid"
+#define LOG_PATH_WATCHD                LOG_FILE_PATH"watchdog/"
 
 /**
  * The prefix of app update locking file name.
- * The locking file show create in WD_FILE_PATH_APP.
+ * The locking file show create in CONF_PATH_WATCHD.
  * After the app update, the locking file should delete immediately.
  */
 #define APP_UPDATE_FILE_PREFIX          "UpLock."
@@ -86,6 +90,8 @@
 #define SYS_APP_COMM_NAME               "comm"
 /** The file path of file which stores the system max pid */
 #define SYS_PROC_MAX_PID_FILE           "/proc/sys/kernel/pid_max"
+
+ 
 /************* Watchdag Constants Definition ***************/
 typedef enum MITFuncRetValue {
     MIT_RETV_SUCCESS              = 0,

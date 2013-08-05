@@ -51,31 +51,31 @@ struct wd_configure* get_wd_configure(void)
     wd_conf->default_feed_period        = DEFAULT_FEED_PERIOD;
     wd_conf->max_missed_feed_times      = DEFAULT_MAX_MISSED_FEED_TIMES;
     
-    FILE *configue_fp = fopen(WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE, "r");
+    FILE *configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "r");
     if (configue_fp == NULL) {
         if (errno == ENOENT) {
             /** no such file or directory */
             /** keep the path exist */
-            int ret = mkdir(WD_FILE_PATH_APP, S_IRWXU|S_IRWXG|S_IRWXO);
+            int ret = mkdir(CONF_PATH_WATCHD, S_IRWXU|S_IRWXG|S_IRWXO);
             if (ret == -1 && errno != EEXIST) {
                 MITLog_DetErrPrintf("mkdir() failed");
                 goto FREE_CONFIGURE_TAG;
             }
             /** write info into configure file */
-            configue_fp = fopen(WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE, "w+");
+            configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w+");
             if (configue_fp == NULL) {
-                MITLog_DetErrPrintf("fopen() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE);
+                MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
                 goto FREE_CONFIGURE_TAG;
             }
             ret = fprintf(configue_fp, "%s = %lu\n%s = %lu\n",
                     CONF_KNAME_MISSED_TIMES, wd_conf->max_missed_feed_times,
                     CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period);	
             if (ret < 0) {
-                MITLog_DetErrPrintf("fprintf() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE);
+                MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
                 goto CLOSE_FILE_TAG;
             }
         } else {
-            MITLog_DetErrPrintf("fopen() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE);
+            MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
             goto FREE_CONFIGURE_TAG;
         }
     }
@@ -236,16 +236,16 @@ FREE_CONFIGURE_TAG:
 MITFuncRetValue save_monitor_apps_info()
 {
     /** write info into configure file */
-    FILE *configue_fp = fopen(WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE, "w");
+    FILE *configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w");
     if (configue_fp == NULL) {
-        MITLog_DetErrPrintf("fopen() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE);
+        MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
         return MIT_RETV_OPEN_FILE_FAIL;
     }
     int ret = fprintf(configue_fp, "%s = %lu\n%s = %lu\n",
                   CONF_KNAME_MISSED_TIMES, wd_configure->max_missed_feed_times,
                   CONF_KNAME_FEED_PERIOD, wd_configure->default_feed_period);
     if (ret < 0) {
-        MITLog_DetErrPrintf("fprintf() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE);
+        MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
         return MIT_RETV_FAIL;
     }
     /** write the monitored apps name and cmd line */
@@ -256,7 +256,7 @@ MITFuncRetValue save_monitor_apps_info()
                 tmp->app_info.app_name,
                 tmp->app_info.cmd_line);
         if (ret < 0) {
-           MITLog_DetErrPrintf("fprintf() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_CONFIGURE); 
+           MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF); 
         }
         tmp = tmp->next_node;
     }
@@ -639,7 +639,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
             tmp->app_info.app_last_feed_time = now_time;
             /** check whether the target is updating */
             char *update_lock_file = calloc(
-                                            strlen(WD_FILE_PATH_APP) +
+                                            strlen(CONF_PATH_WATCHD) +
                                             strlen(tmp->app_info.app_name) +
                                             strlen(APP_UPDATE_FILE_PREFIX) + 1,
                                             sizeof(char));
@@ -647,7 +647,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
                 MITLog_DetErrPrintf("calloc() falied");
                 continue;
             }
-            sprintf(update_lock_file, "%s%s%s", WD_FILE_PATH_APP, APP_UPDATE_FILE_PREFIX, tmp->app_info.app_name);
+            sprintf(update_lock_file, "%s%s%s", CONF_PATH_WATCHD, APP_UPDATE_FILE_PREFIX, tmp->app_info.app_name);
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "update_lock_file:%s", update_lock_file);
             int exist_flag = 0;
             if ((exist_flag = access(update_lock_file, F_OK)) < 0) {
@@ -709,8 +709,8 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Port:%d", ntohs(addr_self.sin_port));
     char port_str[16] = {0};
     sprintf(port_str, "%d", ntohs(addr_self.sin_port));
-    if (write_file(WD_FILE_PATH_APP WD_FILE_NAME_PORT, port_str, strlen(port_str)) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("write_file() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_PID);
+    if (write_file(CONF_PATH_WATCHD F_NAME_COMM_PORT, port_str, strlen(port_str)) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("write_file() %s failed", CONF_PATH_WATCHD F_NAME_COMM_PORT);
         goto CLOSE_FD_TAG;
     }
     

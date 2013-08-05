@@ -54,7 +54,7 @@ static pthread_mutex_t conf_mutex;
 void wd_send_register_pg(evutil_socket_t fd)
 {
     // read from watchdog port file to get port
-    FILE *fp = fopen(WD_FILE_PATH_APP WD_FILE_NAME_PORT, "r");
+    FILE *fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "r");
     if (fp == NULL) {
         return;
     }

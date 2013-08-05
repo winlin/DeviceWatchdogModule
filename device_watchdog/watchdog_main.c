@@ -24,7 +24,7 @@ int main(int argc, const char * argv[])
 	if(ret == -1) {
 		perror("call daemon() failed!");
 	}
-    MITLogOpen("DeviceWatchdog", WD_FILE_PATH_LOG);
+    MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD);
     
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
     
@@ -45,8 +45,8 @@ int main(int argc, const char * argv[])
     /** save pid info */
 	char pid_str[16] = {0};
     sprintf(pid_str, "%d", wd_conf->current_pid);
-    if (write_file(WD_FILE_PATH_APP WD_FILE_NAME_PID, pid_str, strlen(pid_str)) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("write_file() %s failed", WD_FILE_PATH_APP WD_FILE_NAME_PID);
+    if (write_file(CONF_PATH_WATCHD F_NAME_COMM_PID, pid_str, strlen(pid_str)) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("write_file() %s failed", CONF_PATH_WATCHD F_NAME_COMM_PID);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }

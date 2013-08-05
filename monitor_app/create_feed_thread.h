@@ -13,21 +13,6 @@
 #include <sys/types.h>
 
 /**
- * The app's log and configure path names 
- * must be same with the app's name.
- * ex: app's name is "dev_watchdog"
- *     app's log file path is LOG_FILE_PATH"dev_watchdog"
- */
-/** The device update daemon app name */
-#define APP_NAME_UPAPPSD               "update_apps_daemon"
-/** Use to store update apps daemon's configure file. */
-#define CONF_PATH_UPAPPSD              APP_CONF_PATH APP_NAME_UPAPPSD"/"
-/** Use to store update apps daemon's log files. */
-#define LOG_PATH_UPAPPSD               LOG_FILE_PATH APP_NAME_UPAPPSD"/"
-/** Watchdog's version number */
-#define VERSION_UPAPPSD                "v1.0.1"
-
-/**
  * Create the feed thread.
  * !!! The function will call pthread_detach(), so it resource will be
  *     auto released by system; if pthread_detach() failed, pthread_kill(SIGKILL)

@@ -10,11 +10,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define APP_NUMBER    "10"
+/** the app name */
+#define MONITOR_APP_NAME               "app1"
+/** app's version number */
+#define VERSION_UPAPPSD                "v1.0.1"
 
 int main(int argc, const char * argv[])
 {
-    MITLogOpen("UDPClient", LOG_FILE_PATH"app"APP_NUMBER);
+    MITLogOpen("UDPClient", LOG_FILE_PATH MONITOR_APP_NAME);
     int ret = 0;
     char dir[1024];
     char *cwd_char = getcwd(dir, sizeof(dir));
@@ -24,22 +27,22 @@ int main(int argc, const char * argv[])
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
 
     struct feed_thread_configure th_conf;
-    th_conf.cmd_line = "/data/apps/app"APP_NUMBER;
-    th_conf.app_name = "app"APP_NUMBER;
+    th_conf.cmd_line = "/data/apps/"MONITOR_APP_NAME;
+    th_conf.app_name = MONITOR_APP_NAME;
     th_conf.feed_period = 3;
     th_conf.monitored_pid = getpid();
 
     /** save pid info */
     char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", th_conf.monitored_pid);
-    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_PID);
+    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s failed", MONITOR_APP_NAME F_NAME_COMM_PID);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }
     /** save verson info */
-    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_VERSON, VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_VERSON);
+    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s failed", MONITOR_APP_NAME F_NAME_COMM_VERSON);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }

@@ -22,7 +22,7 @@ int main(int argc, const char * argv[])
     int ret = 0;
 	ret = daemon(1, 1);
 	if(ret == -1) {
-		MITLog_DetErrPrintf("call daemon() failed!");
+		perror("call daemon() failed!");
 	}
     MITLogOpen("DeviceWatchdog", WD_FILE_PATH_LOG);
     

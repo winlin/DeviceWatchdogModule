@@ -1,10 +1,10 @@
-WD_PROGNAME= dev_watchdog
-APP_PROGNAME= app10
+WD_PROGNAME=dev_watchdog
+APP_PROGNAME=app10
 
 CC=gcc
 #CC=arm-linux-androideabi-gcc
 
-CROSS_INCLUDE_PATH= /home/gtliu/AndroidSDK/android_libevent
+CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
 
 ifeq ($(CC),gcc)
 	INCLUDES= -I.

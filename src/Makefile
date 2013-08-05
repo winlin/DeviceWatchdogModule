@@ -7,4 +7,4 @@ $(LOG_MODULE_M_NAME): mit_log_module.c ../include/mit_data_define.h ../include/m
 	$(CC) $(CFLAGS) -c $^ $(LIBS)
 
 clean:
-	$(rm) *.o *.gch *.d $(DATA_DEFINE_M_NAME) $(LOG_MODULE_M_NAME)
+	$(rm) *.o *.gch *.d $(DATA_DEFINE_M_NAME) $(LOG_MODULE_M_NAME) ../include/*.d ../include/*.gch

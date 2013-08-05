@@ -11,11 +11,10 @@
 #include <string.h>
 #include <sys/types.h>
 
-/**
- * The interval of watchdog check apps's alive.
- * Unit is second.
- */
-#define WD_CHECK_TIME_INTERVAL               1
+/** The max absolutely path length. */
+#define MAX_AB_PATH_LEN                      1024
+/** The max file name length. */
+#define MAX_F_NAME_LEN                       256
 
 /**
  * The max UDP package size.
@@ -58,18 +57,30 @@
 #define F_NAME_COMM_PID                "pid"
 /** The default file name of app's info of port */
 #define F_NAME_COMM_PORT               "port"
+/** The default file name of app's info of version */
+#define F_NAME_COMM_VERSON             "version"
 /** The default file name of app's configure */
 #define F_NAME_COMM_CONF               "configure.cfg"
-
+ 
+/**
+ * The app's log and configure path names 
+ * must be same with the app's name.
+ * ex: app's name is "dev_watchdog"
+ *     app's log file path is LOG_FILE_PATH"dev_watchdog"
+ */
+/** The device watchdog app name */
+#define APP_NAME_WATCHDOG              "dev_watchdog"
 /** Use to store watchdog's configure file. */
-#define CONF_PATH_WATCHD               APP_CONF_PATH"watchdog/"
+#define CONF_PATH_WATCHD               APP_CONF_PATH APP_NAME_WATCHDOG"/"
 /** Use to store watchdog's log files. */
-#define LOG_PATH_WATCHD                LOG_FILE_PATH"watchdog/"
-
-/** Use to store update apps daemon's configure file. */
-#define CONF_PATH_UPAPPSD              APP_CONF_PATH"update_apps_daemon/"
-/** Use to store update apps daemon's log files. */
-#define LOG_PATH_UPAPPSD               LOG_FILE_PATH"update_apps_daemon/"
+#define LOG_PATH_WATCHD                LOG_FILE_PATH APP_NAME_WATCHDOG"/"
+/** Watchdog's version number */
+#define VERSION_WD                     "v1.0.1"
+/**
+ * The interval of watchdog check apps's alive.
+ * Unit is second.
+ */
+#define WD_CHECK_TIME_INTERVAL               1
 
 /**
  * The prefix of app update locking file name.
@@ -273,6 +284,12 @@ MITFuncRetValue write_file(const char *file_path, const char *content, size_t co
  *         If the app isn't executing 0 will be returned.
  */
 long long int get_pid_with_comm(const char *comm);
+
+/**
+ * Save app's configure info into APP_CONF_PATH
+ * The file will be open by flag "w"
+ */
+MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, const char *content);
 
 #endif
 

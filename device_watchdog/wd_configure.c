@@ -51,8 +51,8 @@ struct wd_configure* get_wd_configure(void)
     wd_conf->default_feed_period        = DEFAULT_FEED_PERIOD;
     wd_conf->max_missed_feed_times      = DEFAULT_MAX_MISSED_FEED_TIMES;
     
-    FILE *configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "r");
-    if (configue_fp == NULL) {
+    FILE *conf_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "r");
+    if (conf_fp == NULL) {
         if (errno == ENOENT) {
             /** no such file or directory */
             /** keep the path exist */
@@ -62,12 +62,12 @@ struct wd_configure* get_wd_configure(void)
                 goto FREE_CONFIGURE_TAG;
             }
             /** write info into configure file */
-            configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w+");
-            if (configue_fp == NULL) {
+            conf_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w+");
+            if (conf_fp == NULL) {
                 MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
                 goto FREE_CONFIGURE_TAG;
             }
-            ret = fprintf(configue_fp, "%s = %lu\n%s = %lu\n",
+            ret = fprintf(conf_fp, "%s = %lu\n%s = %lu\n",
                     CONF_KNAME_MISSED_TIMES, wd_conf->max_missed_feed_times,
                     CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period);	
             if (ret < 0) {
@@ -86,9 +86,9 @@ struct wd_configure* get_wd_configure(void)
         goto FREE_CONFIGURE_TAG;
     }
     ssize_t read  = 0;
-    while ((read = fscanf(configue_fp, "%[^\n]", line)) != EOF) {
+    while ((read = fscanf(conf_fp, "%[^\n]", line)) != EOF) {
         /** eat the \n char */
-        fgetc(configue_fp);
+        fgetc(conf_fp);
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Read line: %d : %s", read, line);
         /** strip the space char include:space, \f, \n, \r, \t, \v */
         read = strip_string_space(&line);
@@ -223,14 +223,14 @@ struct wd_configure* get_wd_configure(void)
         free(value_str);
         memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
     }
-    fclose(configue_fp);
+    fclose(conf_fp);
     free(line);
     return wd_conf;
 
 FREE_LINE_TAG:
     free(line);
 CLOSE_FILE_TAG:
-    fclose(configue_fp);
+    fclose(conf_fp);
 FREE_CONFIGURE_TAG:
     free(wd_conf);
     return NULL;
@@ -239,12 +239,12 @@ FREE_CONFIGURE_TAG:
 MITFuncRetValue save_monitor_apps_info()
 {
     /** write info into configure file */
-    FILE *configue_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w");
-    if (configue_fp == NULL) {
+    FILE *conf_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "w");
+    if (conf_fp == NULL) {
         MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
         return MIT_RETV_OPEN_FILE_FAIL;
     }
-    int ret = fprintf(configue_fp, "%s = %lu\n%s = %lu\n",
+    int ret = fprintf(conf_fp, "%s = %lu\n%s = %lu\n",
                   CONF_KNAME_MISSED_TIMES, wd_configure->max_missed_feed_times,
                   CONF_KNAME_FEED_PERIOD, wd_configure->default_feed_period);
     if (ret < 0) {
@@ -254,7 +254,7 @@ MITFuncRetValue save_monitor_apps_info()
     /** write the monitored apps name and cmd line */
     struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
     while (tmp) {
-        ret = fprintf(configue_fp, "%s = %s;%s\n",
+        ret = fprintf(conf_fp, "%s = %s;%s\n",
                 CONF_KANME_PROCESSES,
                 tmp->app_info.app_name,
                 tmp->app_info.cmd_line);
@@ -263,7 +263,7 @@ MITFuncRetValue save_monitor_apps_info()
         }
         tmp = tmp->next_node;
     }
-    fclose(configue_fp);
+    fclose(conf_fp);
     return MIT_RETV_SUCCESS;
 }
 

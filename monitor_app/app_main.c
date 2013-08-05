@@ -6,6 +6,7 @@
 //
 
 #include "create_feed_thread.h"
+#include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -14,19 +15,35 @@
 int main(int argc, const char * argv[])
 {
     MITLogOpen("UDPClient", LOG_FILE_PATH"app"APP_NUMBER);
-    
+    int ret = 0;
     char dir[1024];
     char *cwd_char = getcwd(dir, sizeof(dir));
     if (cwd_char == NULL) {
         MITLog_DetErrPrintf("getcwd() failed");
     }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
-    
+
     struct feed_thread_configure th_conf;
     th_conf.cmd_line = "/data/apps/app"APP_NUMBER;
     th_conf.app_name = "app"APP_NUMBER;
     th_conf.feed_period = 3;
     th_conf.monitored_pid = getpid();
+
+    /** save pid info */
+    char tmp_str[16] = {0};
+    sprintf(tmp_str, "%d", th_conf.monitored_pid);
+    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_PID);
+        ret = -1;
+        goto CLOSE_LOG_TAG;
+    }
+    /** save verson info */
+    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_VERSON, VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_VERSON);
+        ret = -1;
+        goto CLOSE_LOG_TAG;
+    }
+
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Start the feed thread:cmd=%s", th_conf.cmd_line);
     create_feed_thread(&th_conf);
     int i = 0;
@@ -35,12 +52,14 @@ int main(int argc, const char * argv[])
         sleep(3);
     }
     
-    MITFuncRetValue ret = unregister_watchdog();
-    if (ret != MIT_RETV_SUCCESS) {
+    MITFuncRetValue ret_t = unregister_watchdog();
+    if (ret_t != MIT_RETV_SUCCESS) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "Unregister app failed! Watchdog will restart the app later");
+        ret = -1;
     }
-    
+
+CLOSE_LOG_TAG:
     MITLogClose();
-    return 0;
+    return ret;
 }
 

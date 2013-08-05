@@ -36,20 +36,20 @@ int main(int argc, const char * argv[])
     char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", th_conf.monitored_pid);
     if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", MONITOR_APP_NAME F_NAME_COMM_PID);
+        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", MONITOR_APP_NAME, F_NAME_COMM_PID);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }
     /** save verson info */
     if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_MONITOR_APP) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", MONITOR_APP_NAME F_NAME_COMM_VERSON);
+        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", MONITOR_APP_NAME, F_NAME_COMM_VERSON);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Start the feed thread:cmd=%s", th_conf.cmd_line);
     create_feed_thread(&th_conf);
-    
+
     while (1) {
         MITLog_DetPuts(MITLOG_LEVEL_COMMON, "The main thread rotate one time per 3 seconds");
         sleep(3);

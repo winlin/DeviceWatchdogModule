@@ -716,11 +716,10 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Port:%d", ntohs(addr_self.sin_port));
     char port_str[16] = {0};
     sprintf(port_str, "%d", ntohs(addr_self.sin_port));
-    if (write_file(CONF_PATH_WATCHD F_NAME_COMM_PORT, port_str, strlen(port_str)) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("write_file() %s failed", CONF_PATH_WATCHD F_NAME_COMM_PORT);
+    if(save_app_conf_info(APP_NAME_WATCHDOG, F_NAME_COMM_PORT, port_str) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", APP_NAME_WATCHDOG, F_NAME_COMM_PORT);
         goto CLOSE_FD_TAG;
     }
-    
     struct event_base *ev_base = event_base_new();
     if (!ev_base) {
         MITLog_DetErrPrintf("event_base_new() failed");

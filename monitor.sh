@@ -1,10 +1,4 @@
 #!/bin/sh
-sudo mkdir -p /data/watchdog
-sudo mkdir -p /data/logs
-sudo mkdir -p /data/apps
-
-sudo chmod a+wrx -R /data
-
 clear
 while true ; do
 	#statements

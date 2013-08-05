@@ -94,7 +94,6 @@ struct wd_configure* get_wd_configure(void)
         read = strip_string_space(&line);
         /** ignore the empty line */
         if (read == 0) {
-            MITLog_DetPuts(MITLOG_LEVEL_COMMON, "111111");
             memset(line, 0, WD_CONFIG_FILE_LINE_MAX_LEN);
             continue;
         }
@@ -179,6 +178,10 @@ struct wd_configure* get_wd_configure(void)
             node->app_info.app_pid = (pid_t)get_pid_with_comm(node->app_info.app_name);
             if (node->app_info.app_pid > 0) {
                 node->app_info.app_last_feed_time = time(NULL);
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, 
+                                 "get the app's pid:%d and update the app_last_feed_time:%d",
+                                 node->app_info.app_pid,
+                                 node->app_info.app_last_feed_time);
             }
             
             // get cmd line
@@ -632,7 +635,10 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
         
         if (now_time > app_final_time) {
             MITLog_DetPrintf(MITLOG_LEVEL_WARNING,
+                             "now:%d app final time:%d\n"
                              "app(old pid:%d) need to be restarted\n cmdline:%s",
+                             now_time, 
+                             app_final_time,
                              tmp->app_info.app_pid,
                              tmp->app_info.cmd_line);
             /** update the last feed time to avoid doubly starting the app */
@@ -648,7 +654,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
                 continue;
             }
             sprintf(update_lock_file, "%s%s%s", CONF_PATH_WATCHD, APP_UPDATE_FILE_PREFIX, tmp->app_info.app_name);
-            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "update_lock_file:%s", update_lock_file);
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "check update_lock_file:%s", update_lock_file);
             int exist_flag = 0;
             if ((exist_flag = access(update_lock_file, F_OK)) < 0) {
                 if (errno != ENOENT) {
@@ -661,6 +667,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
                 free(update_lock_file);
                 continue;
             }
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "update_lock_file:%s not exist", update_lock_file);
             free(update_lock_file);
             /** start the app again */
             start_the_monitor_app(&tmp->app_info);

@@ -66,6 +66,11 @@
 /** Use to store watchdog's log files. */
 #define LOG_PATH_WATCHD                LOG_FILE_PATH"watchdog/"
 
+/** Use to store update apps daemon's configure file. */
+#define CONF_PATH_UPAPPSD              APP_CONF_PATH"update_apps_daemon/"
+/** Use to store update apps daemon's log files. */
+#define LOG_PATH_UPAPPSD               LOG_FILE_PATH"update_apps_daemon/"
+
 /**
  * The prefix of app update locking file name.
  * The locking file show create in CONF_PATH_WATCHD.

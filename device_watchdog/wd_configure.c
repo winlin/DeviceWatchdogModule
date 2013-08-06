@@ -555,10 +555,32 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
                          app_info->cmd_line);
     /** at first kill that app */
     if (app_info->app_pid > 0) {
-        int ret = kill(app_info->app_pid, SIGKILL);
-        if (ret < 0) {
-            MITLog_DetErrPrintf("kill() process:%d failed", app_info->app_pid);
+        char app_comm[MAX_F_NAME_LEN] = {0};
+        /** 
+         * If the app_pid still belongs to the monitored app
+         * then kill() will be called.
+         */
+        get_comm_with_pid(app_info->app_pid, app_comm);
+        if (strcmp(app_info->app_name, app_comm) == 0) {
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+                             "%s with pid=%lld will be killed",
+                             app_info->app_name, 
+                             app_info->app_pid);
+            int ret = kill(app_info->app_pid, SIGKILL);
+            if (ret < 0) {
+                MITLog_DetErrPrintf("kill() process:%d failed", app_info->app_pid);
+            } 
+        } else {
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+                             "%s with pid=%lld will be exec() without kill()",
+                             app_info->app_name, 
+                             app_info->app_pid);
         }
+    } else {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+                             "%s with pid=%lld will be exec() without kill()",
+                             app_info->app_name, 
+                             app_info->app_pid);
     }
     char *cmd_line = strdup(app_info->cmd_line);
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "strdup() cmd_line:%s", cmd_line);

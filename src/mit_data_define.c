@@ -354,6 +354,7 @@ long long int get_pid_with_comm(const char *comm)
     int scan_num = fscanf(max_pid_file, "%lld", &sys_max_pid);
     if (scan_num <= 0) {
         MITLog_DetErrPrintf("fscanf() failed");
+        fclose(max_pid_file);
         return app_pid;
     }
 
@@ -385,6 +386,34 @@ long long int get_pid_with_comm(const char *comm)
         }
     }
     return 0;
+}
+
+void get_comm_with_pid(long long int pid, char* app_comm)
+{
+    if (pid < 2) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "pid can't be samller than 2");
+        return;
+    }
+    char app_comm_path[60] = {0};
+    sprintf(app_comm_path, "%s%lld/%s", SYS_PROC_PATH, pid, SYS_APP_COMM_NAME);
+    if ((access(app_comm_path, F_OK)) != 0) {
+        return;
+    }
+    FILE *comm_fp = fopen(app_comm_path, "r");
+    if (comm_fp == NULL) {
+        MITLog_DetErrPrintf("fopen() %s failed", app_comm_path);
+        return;
+    } 
+    scan_num = fscanf(comm_fp, "%s", app_comm);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() %s failed", app_comm_path);
+    } else {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
+                         "get pid=%lld app's comm:%s",
+                         pid,
+                         app_comm);
+    }
+    fclose(comm_fp);
 }
 
 MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, const char *content)

@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 /** the app name */
-#define MONITOR_APP_NAME               "app1"
+#define MONITOR_APP_NAME               "app10"
 /** app's version number */
 #define VERSION_MONITOR_APP            "v1.0.1"
 

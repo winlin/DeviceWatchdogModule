@@ -1,6 +1,6 @@
 WD_PROGNAME=dev_watchdog
-APP_PROGNAME=app10
 UPAPP_PROGNAME=update_apps_daemon
+APP_PROGNAME=app10
 
 CC=gcc
 #CC=arm-linux-androideabi-gcc

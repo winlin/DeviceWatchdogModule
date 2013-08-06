@@ -426,7 +426,7 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
     }
     /** create the configure path for the app */
     char file_path[MAX_AB_PATH_LEN] = {0};
-    snprintf(file_path, MAX_AB_PATH_LEN-1, "%s%s", APP_CONF_PATH, app_name);
+    snprintf(file_path, MAX_AB_PATH_LEN, "%s%s", APP_CONF_PATH, app_name);
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "file path:%s", file_path);
     if ((access(file_path, F_OK)) != 0) {
         int ret_t = mkdir(file_path, S_IRWXU|S_IRWXG|S_IRWXO);
@@ -437,7 +437,7 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
     }
     /** save the content into file */
     char tar_file[MAX_AB_PATH_LEN] = {0};
-    snprintf(tar_file, MAX_AB_PATH_LEN-1, "%s/%s", file_path, file_name);
+    snprintf(tar_file, MAX_AB_PATH_LEN, "%s/%s", file_path, file_name);
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "app conf file:%s", tar_file);
 
     FILE *conf_fp = fopen(tar_file, "w");

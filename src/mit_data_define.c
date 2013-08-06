@@ -404,7 +404,7 @@ void get_comm_with_pid(long long int pid, char* app_comm)
         MITLog_DetErrPrintf("fopen() %s failed", app_comm_path);
         return;
     } 
-    scan_num = fscanf(comm_fp, "%s", app_comm);
+    int scan_num = fscanf(comm_fp, "%s", app_comm);
     if (scan_num <= 0) {
         MITLog_DetErrPrintf("fscanf() %s failed", app_comm_path);
     } else {

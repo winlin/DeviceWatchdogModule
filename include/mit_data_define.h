@@ -292,6 +292,23 @@ void get_comm_with_pid(long long int pid, char* app_comm);
  */
 MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, const char *content);
 
+/**
+ * Get app's verson info from APP_CONF_PATH/app_name/version.
+ */
+void get_app_version(const char *app_name, char *ver_str);
+
+/**
+ * Check whethe app's update lock file exist.
+ * The path is APP_CONF_PATH/app_name/update.lock.
+ * @return if exist return 0 else return -1
+ */
+int check_update_lock_file(const char *app_name);
+
+/**
+ * Start a new process to execute cmd line.
+ */
+MITFuncRetValue start_app_with_cmd_line(const char * cmd_line);
+
 #endif
 
 

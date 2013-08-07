@@ -455,7 +455,120 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
     return MIT_RETV_SUCCESS;
 }
 
+void get_app_version(const char *app_name, char *ver_str)
+{
+    if (strlen(app_name) == 0) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "paramaters can't be empty");
+        return ;
+    }
+    /** create the configure path for the app */
+    char file_path[MAX_AB_PATH_LEN] = {0};
+    snprintf(file_path, MAX_AB_PATH_LEN, "%s%s/%s", APP_CONF_PATH, app_name, F_NAME_COMM_VERSON);
+    if ((access(file_path, F_OK)) != 0) {
+            MITLog_DetErrPrintf("%s dosen't exist", file_path);
+            return;
+    }
+    /** read the content from file */
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "app conf file:%s", file_path);
+    FILE *conf_fp = fopen(file_path, "w");
+    if (conf_fp == NULL) {
+        MITLog_DetErrPrintf("call fopen() failed:%s", file_path);
+        return ;
+    }
+    
+    int scan_num = fscanf(conf_fp, "%s", ver_str);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() %s failed", file_path);
+    } else {
+        MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                         "get app:%s verson number:%s",
+                         app_name,
+                         ver_str);
+    }    
+    fclose(conf_fp);
+}
 
+int check_update_lock_file(const char *app_name)
+{
+    /** check whether the target is updating */
+    char *update_lock_file = calloc(
+                                    strlen(APP_CONF_PATH) +
+                                    strlen(app_name) +
+                                    strlen(F_NAME_COMM_UPLOCK) + 2,
+                                    sizeof(char));
+    if (update_lock_file == NULL) {
+        MITLog_DetErrPrintf("calloc() falied");
+        return -1;
+    }
+    sprintf(update_lock_file, "%s%s/%s", APP_CONF_PATH, app_name, F_NAME_COMM_UPLOCK);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "check update_lock_file:%s", update_lock_file);
+    int exist_flag = 0;
+    if ((exist_flag = access(update_lock_file, F_OK)) < 0) {
+        exist_flag = -1;
+    }
+    free(update_lock_file);
+    return exist_flag;
+}
 
-
-
+MITFuncRetValue start_app_with_cmd_line(const char * cmd_line)
+{
+    char *exec_line = strdup(cmd_line);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "strdup() exec_line:%s", exec_line);
+    if (exec_line == NULL) {
+        MITLog_DetErrPrintf("strdup() failed");
+        return MIT_RETV_FAIL;
+    }
+    int unit_alloc_size   = 4;
+    int sum_alloc_size    = 0;
+    char **cmd_argvs = (char **)calloc(unit_alloc_size, sizeof(char *));
+    sum_alloc_size += unit_alloc_size;
+    char **np        = NULL;
+    if (cmd_argvs == NULL) {
+        MITLog_DetErrPrintf("calloc() failed");
+        free(exec_line);
+        return MIT_RETV_FAIL;
+    }
+    char *str, *save_ptr, *token;
+    int j=0;
+    for (str=exec_line; ; ++j, str=NULL) {
+        token = strtok_r(str, " ", &save_ptr);  // cmd and param divide by " "
+        if (j >= sum_alloc_size) {
+            np = (char **)calloc(sum_alloc_size+unit_alloc_size, sizeof(char *));
+            if (np == NULL) {
+                MITLog_DetErrPrintf("calloc() failed");
+                free(exec_line);
+                free(cmd_argvs);
+                return MIT_RETV_FAIL;
+            }
+            memcpy(np, cmd_argvs, sum_alloc_size*sizeof(char *));
+            sum_alloc_size += unit_alloc_size;
+            free(cmd_argvs);
+            cmd_argvs = np;
+        }
+        cmd_argvs[j] = token;
+        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "j:%d token:%s", j, cmd_argvs[j]);
+        if (token == NULL) {
+            break;
+        }
+    }
+    int pid = vfork();
+    MITFuncRetValue f_ret = MIT_RETV_SUCCESS;
+    if (pid == 0) {
+        int ret = execvp(cmd_argvs[0], cmd_argvs);
+        if (ret < 0) {
+            MITLog_DetErrPrintf("execvp() failed");
+        }
+        exit(EXIT_SUCCESS);
+    } else if (pid > 0) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
+                         "child process:%d will execvp(%s)",
+                         pid,
+                         exec_line);
+    } else {
+        MITLog_DetErrPrintf("vfork() failed");
+        f_ret = MIT_RETV_FAIL;
+    }
+    free(cmd_argvs);
+    free(exec_line);
+    return f_ret;
+}

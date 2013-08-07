@@ -667,15 +667,15 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
             tmp->app_info.app_last_feed_time = now_time;
             /** check whether the target is updating */
             char *update_lock_file = calloc(
-                                            strlen(CONF_PATH_WATCHD) +
+                                            strlen(APP_CONF_PATH) +
                                             strlen(tmp->app_info.app_name) +
-                                            strlen(APP_UPDATE_FILE_PREFIX) + 1,
+                                            strlen(F_NAME_COMM_UPLOCK) + 2,
                                             sizeof(char));
             if (update_lock_file == NULL) {
                 MITLog_DetErrPrintf("calloc() falied");
                 continue;
             }
-            sprintf(update_lock_file, "%s%s%s", CONF_PATH_WATCHD, APP_UPDATE_FILE_PREFIX, tmp->app_info.app_name);
+            sprintf(update_lock_file, "%s%s/%s", APP_CONF_PATH, tmp->app_info.app_name, F_NAME_COMM_UPLOCK);
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "check update_lock_file:%s", update_lock_file);
             int exist_flag = 0;
             if ((exist_flag = access(update_lock_file, F_OK)) < 0) {

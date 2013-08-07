@@ -61,7 +61,9 @@
 #define F_NAME_COMM_VERSON             "version"
 /** The default file name of app's configure */
 #define F_NAME_COMM_CONF               "configure.cfg"
- 
+/** The default file name of app's update lock file */
+#define F_NAME_COMM_UPLOCK             "update.lock"
+
 /**
  * The app's log and configure path names 
  * must be same with the app's name.
@@ -81,13 +83,6 @@
  * Unit is second.
  */
 #define WD_CHECK_TIME_INTERVAL               1
-
-/**
- * The prefix of app update locking file name.
- * The locking file show create in CONF_PATH_WATCHD.
- * After the app update, the locking file should delete immediately.
- */
-#define APP_UPDATE_FILE_PREFIX          "UpLock."
 
 /**
  * The divide string between key and value

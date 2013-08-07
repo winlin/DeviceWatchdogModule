@@ -582,63 +582,10 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
                              app_info->app_name, 
                              app_info->app_pid);
     }
-    char *cmd_line = strdup(app_info->cmd_line);
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "strdup() cmd_line:%s", cmd_line);
-    if (cmd_line == NULL) {
-        MITLog_DetErrPrintf("strdup() failed");
-        return;
+    MITFuncRetValue f_ret = start_app_with_cmd_line(app_info->cmd_line);
+    if (f_ret != MIT_RETV_SUCCESS) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "start_app_with_cmd_line() failed:%s", app_info->cmd_line);
     }
-    int unit_alloc_size   = 4;
-    int sum_alloc_size    = 0;
-    char **cmd_argvs = (char **)calloc(unit_alloc_size, sizeof(char *));
-    sum_alloc_size += unit_alloc_size;
-    char **np        = NULL;
-    if (cmd_argvs == NULL) {
-        MITLog_DetErrPrintf("calloc() failed");
-        free(cmd_line);
-        return;
-    }
-    char *str, *save_ptr, *token;
-    int j=0;
-    for (str=cmd_line; ; ++j, str=NULL) {
-        token = strtok_r(str, " ", &save_ptr);  // cmd and param divide by " "
-        if (j >= sum_alloc_size) {
-            np = (char **)calloc(sum_alloc_size+unit_alloc_size, sizeof(char *));
-            if (np == NULL) {
-                MITLog_DetErrPrintf("calloc() failed");
-                free(cmd_line);
-                free(cmd_argvs);
-                return;
-            }
-            memcpy(np, cmd_argvs, sum_alloc_size*sizeof(char *));
-            sum_alloc_size += unit_alloc_size;
-            free(cmd_argvs);
-            cmd_argvs = np;
-        }
-        cmd_argvs[j] = token;
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "j:%d token:%s", j, cmd_argvs[j]);
-        if (token == NULL) {
-            break;
-        }
-    }
-    int pid = vfork();
-    if (pid == 0) {
-        int ret = execvp(cmd_argvs[0], cmd_argvs);
-        if (ret < 0) {
-            MITLog_DetErrPrintf("execvp() failed");
-        }
-        exit(EXIT_SUCCESS);
-    } else if (pid > 0) {
-        app_info->app_pid = pid;
-        MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
-                         "child process:%d will execvp(%s)",
-                         pid,
-                         app_info->cmd_line);
-    } else {
-        MITLog_DetErrPrintf("vfork() failed");
-    }
-    free(cmd_argvs);
-    free(cmd_line);
 }
 
 void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
@@ -666,33 +613,14 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
             /** update the last feed time to avoid doubly starting the app */
             tmp->app_info.app_last_feed_time = now_time;
             /** check whether the target is updating */
-            char *update_lock_file = calloc(
-                                            strlen(APP_CONF_PATH) +
-                                            strlen(tmp->app_info.app_name) +
-                                            strlen(F_NAME_COMM_UPLOCK) + 2,
-                                            sizeof(char));
-            if (update_lock_file == NULL) {
-                MITLog_DetErrPrintf("calloc() falied");
+            if (check_update_lock_file(tmp->app_info.app_name) == 0) {
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s update_lock_file exist", tmp->app_info.app_name);
                 continue;
+            } else {
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s update_lock_file not exist", tmp->app_info.app_name);
+                /** start the app again */
+                start_the_monitor_app(&tmp->app_info);
             }
-            sprintf(update_lock_file, "%s%s/%s", APP_CONF_PATH, tmp->app_info.app_name, F_NAME_COMM_UPLOCK);
-            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "check update_lock_file:%s", update_lock_file);
-            int exist_flag = 0;
-            if ((exist_flag = access(update_lock_file, F_OK)) < 0) {
-                if (errno != ENOENT) {
-                    MITLog_DetErrPrintf("access() %s failed", update_lock_file);
-                    free(update_lock_file);
-                    continue;
-                }
-            } else if (exist_flag == 0) {
-                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s is updating", tmp->app_info.app_name);
-                free(update_lock_file);
-                continue;
-            }
-            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "update_lock_file:%s not exist", update_lock_file);
-            free(update_lock_file);
-            /** start the app again */
-            start_the_monitor_app(&tmp->app_info);
         }
     }
 }

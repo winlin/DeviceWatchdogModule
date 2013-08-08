@@ -6,8 +6,8 @@
 //  Copyright (c) 2013 GT. All rights reserved.
 //
 
-#include "include/mit_log_module.h"
-#include "include/mit_data_define.h"
+#include "../include/mit_log_module.h"
+#include "../include/mit_data_define.h"
 #include "up_apps_module.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,7 +26,7 @@ MITFuncRetValue update_c_app(struct up_app_info *app_info)
     MITLog_DetLogEnter
     /** check the verson number */
     char ver_str[30] = {0};
-    get_app_version(APP_NAME_UPAPPSD, ver_str);
+    get_app_version(app_info->app_name, ver_str);
     if (strlen(ver_str) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
         return MIT_RETV_FAIL;
@@ -94,23 +94,13 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
     struct up_app_info_node *iter = list_head;
     struct up_app_info_node *pre_iter = iter;
     while (iter) {
+        MITFuncRetValue f_ret = MIT_RETV_FAIL;
         switch (iter->app_info.app_type) {
             case UPAPP_TYPE_C:
                 //TODO: realize the update C app
-                if(update_c_app(&iter->app_info) != MIT_RETV_SUCCESS) {
+                if((f_ret = update_c_app(&iter->app_info)) != MIT_RETV_SUCCESS) {
                     MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_c_app() failed");
-                } else {
-                    if (iter == list_head) {
-                        list_head = NULL;
-                    } else {
-                        pre_iter->next_node = iter->next_node;
-                    }
-                    free(iter->app_info.app_name);
-                    free(iter->app_info.app_path);
-                    free(iter->app_info.new_app_path);
-                    free(iter->app_info.new_version);
-                    free(iter);
-                }
+                } 
                 break;
             case UPAPP_TYPE_KMODULE:
                 //TODO: realize the update kernel module
@@ -123,8 +113,23 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
                 break;
         }
         //TODO: if success release the node
-        pre_iter = iter;
-        iter = iter->next_node;
+        if (f_ret == MIT_RETV_SUCCESS) {
+            struct up_app_info_node *tmp = iter;
+            if (iter == list_head) {
+                list_head = pre_iter = iter->next_node;
+            } else {
+                pre_iter->next_node = iter->next_node;
+            }
+            iter = iter->next_node;
+            free(tmp->app_info.app_name);
+            free(tmp->app_info.app_path);
+            free(tmp->app_info.new_app_path);
+            free(tmp->app_info.new_version);
+            free(tmp);
+        } else {
+           pre_iter = iter;
+           iter = iter->next_node; 
+        }
     }
     MITLog_DetLogExit
 }
@@ -144,8 +149,20 @@ MITFuncRetValue start_app_update_func(struct up_app_info_node **head)
     list_head->app_info.app_name = strdup("app1");
     list_head->app_info.app_path = strdup("/data/apps/");
     list_head->app_info.new_app_path = strdup("/data/app1");
-    list_head->app_info.new_version = strdup("v1.0.2");
+    list_head->app_info.new_version = strdup("v1.0.3");
     list_head->next_node = NULL;
+    struct up_app_info_node *sec_node = calloc(1, sizeof(struct up_app_info_node));
+    if (sec_node == NULL) {
+        MITLog_DetErrPrintf("calloc() failed");
+    } else {
+        sec_node->app_info.app_type = UPAPP_TYPE_C;
+        sec_node->app_info.app_name = strdup("app1");
+        sec_node->app_info.app_path = strdup("/data/apps/");
+        sec_node->app_info.new_app_path = strdup("/data/app1");
+        sec_node->app_info.new_version = strdup("v1.0.3");
+        sec_node->next_node = NULL;
+    }
+    list_head->next_node = sec_node;
     
     MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
     struct event_base *ev_base = event_base_new();

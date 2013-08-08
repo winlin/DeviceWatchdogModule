@@ -9,7 +9,7 @@
 #ifndef UpdateAppsDaemon_up_apps_module_h
 #define UpdateAppsDaemon_up_apps_module_h
 
-#include "include/mit_data_define.h"
+#include "../include/mit_data_define.h"
 
 /** The device update daemon app name */
 #define APP_NAME_UPAPPSD               "update_apps_daemon"

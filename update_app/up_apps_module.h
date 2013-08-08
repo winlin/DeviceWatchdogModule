@@ -9,13 +9,19 @@
 #ifndef UpdateAppsDaemon_up_apps_module_h
 #define UpdateAppsDaemon_up_apps_module_h
 
-#include "../include/mit_data_define.h"
+#include "include/mit_data_define.h"
+
+/** The device update daemon app name */
+#define APP_NAME_UPAPPSD               "update_apps_daemon"
+/** The device update daemon app verson */
+#define VERSION_UPAPPSD                "v1.0.1"
 
 /** 
  * The time interval to check the updated apps' list.
  * Unit is second.
  */
 #define UP_APP_DAEMON_TIME_INTERVAL         3
+#define APP_BACKUP_SUFFIX                   ".BAK"
 
 /************* Update App Daemon Struct Definition ***************/
 typedef enum  UPAppType{
@@ -24,25 +30,24 @@ typedef enum  UPAppType{
     UPAPP_TYPE_JAVA     = 3
 } UPAppType;
 
+/**
+ * Attention: the NEW app's version number MAYBE greater
+ * than the current installed one.
+ */
 struct up_app_info {
     /** the updated app's type */
     UPAppType app_type;
     /** the updated app's name */
     char * app_name;
-    /** the update app's absolutely path without file name */
-    char * app_path;
     /** 
-     * the path points to 'new' app
-     * which version number maybe greater
-     * than the current installed one.
+     * the installed app's absolutely path without file name 
+     * ended with '/'
      */
+    char * app_path;
+    /** the path points to NEW app inclucde file name */
     char * new_app_path;
-    /** the 'new' app's verson */
+    /** the NEW app's verson */
     char * new_version;
-    /** the current installed app's verson */
-    char * cur_version;
-    /** the installed app's backup app used for rollback */
-    char * backup_app_path;
 };
 
 struct up_app_info_node {

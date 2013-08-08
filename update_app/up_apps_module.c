@@ -24,7 +24,6 @@ static struct up_app_info_node *list_head;
 MITFuncRetValue update_c_app(struct up_app_info *app_info)
 {
     MITLog_DetLogEnter
-    int ret = 0;
     /** check the verson number */
     char ver_str[30] = {0};
     get_app_version(APP_NAME_UPAPPSD, ver_str);
@@ -39,7 +38,7 @@ MITFuncRetValue update_c_app(struct up_app_info *app_info)
     char cmd_str[MAX_AB_PATH_LEN*3]       = {0};
     /** create the update lock file */
     snprintf(path_one, MAX_AB_PATH_LEN, "%s%s/%s", APP_CONF_PATH, app_info->app_name, F_NAME_COMM_UPLOCK);
-    snprintf(cmd_str, ,MAX_AB_PATH_LEN*3, "touch %s", path_one);
+    snprintf(cmd_str, MAX_AB_PATH_LEN*3, "touch %s", path_one);
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "create update lock file cmd:%s", cmd_str);
     
     if (system(cmd_str) == -1) {
@@ -75,7 +74,7 @@ MITFuncRetValue update_c_app(struct up_app_info *app_info)
     }
     /** remove the update lock file */
     snprintf(path_one, MAX_AB_PATH_LEN, "%s%s/%s", APP_CONF_PATH, app_info->app_name, F_NAME_COMM_UPLOCK);
-    snprintf(cmd_str, ,MAX_AB_PATH_LEN*3, "rm -f %s", path_one);
+    snprintf(cmd_str ,MAX_AB_PATH_LEN*3, "rm -f %s", path_one);
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "remove update lock file cmd:%s", cmd_str);
     
     if (system(cmd_str) == -1) {
@@ -93,10 +92,25 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
     MITLog_DetLogEnter
     waitpid(-1, NULL, WNOHANG);
     struct up_app_info_node *iter = list_head;
+    struct up_app_info_node *pre_iter = iter;
     while (iter) {
         switch (iter->app_info.app_type) {
             case UPAPP_TYPE_C:
                 //TODO: realize the update C app
+                if(update_c_app(&iter->app_info) != MIT_RETV_SUCCESS) {
+                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_c_app() failed");
+                } else {
+                    if (iter == list_head) {
+                        list_head = NULL;
+                    } else {
+                        pre_iter->next_node = iter->next_node;
+                    }
+                    free(iter->app_info.app_name);
+                    free(iter->app_info.app_path);
+                    free(iter->app_info.new_app_path);
+                    free(iter->app_info.new_version);
+                    free(iter);
+                }
                 break;
             case UPAPP_TYPE_KMODULE:
                 //TODO: realize the update kernel module
@@ -109,6 +123,8 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
                 break;
         }
         //TODO: if success release the node
+        pre_iter = iter;
+        iter = iter->next_node;
     }
     MITLog_DetLogExit
 }
@@ -125,10 +141,11 @@ MITFuncRetValue start_app_update_func(struct up_app_info_node **head)
         return MIT_RETV_FAIL;
     }
     list_head->app_info.app_type = UPAPP_TYPE_C;
-    list_head->app_info.app_name = "app1";
-    list_head->app_info.app_path = "/data/apps/";
-    list_head->app_info.new_app_path = "/data/app1";
-    list_head->app_info.new_version = "v1.0.2";
+    list_head->app_info.app_name = strdup("app1");
+    list_head->app_info.app_path = strdup("/data/apps/");
+    list_head->app_info.new_app_path = strdup("/data/app1");
+    list_head->app_info.new_version = strdup("v1.0.2");
+    list_head->next_node = NULL;
     
     MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
     struct event_base *ev_base = event_base_new();

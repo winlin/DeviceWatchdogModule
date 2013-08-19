@@ -54,7 +54,7 @@ int main(int argc, const char * argv[])
         MITLog_DetPuts(MITLOG_LEVEL_COMMON, "The main thread rotate one time per 3 seconds");
         sleep(3);
     }
-    
+
     MITFuncRetValue ret_t = unregister_watchdog();
     if (ret_t != MIT_RETV_SUCCESS) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "Unregister app failed! Watchdog will restart the app later");

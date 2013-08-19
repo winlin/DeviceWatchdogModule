@@ -43,12 +43,14 @@
  */
 #define MAX_MISS_FEEDBACK_TIMES              (DEFAULT_MAX_MISSED_FEED_TIMES - 1)
 
-/** 
- * The path must end with '/'. 
- * Please make sure these path exist. 
+/**
+ * The path must end with '/'.
+ * Please make sure these path exist.
  */
 /** The apps' common path */
-#define APP_COMM_PATH                  "/data/"
+#define APP_COMM_PATH                  "/sdcard/bussale/"
+/** Use to store all apps file */
+#define APP_EXEC_FILE_PATH             APP_COMM_PATH"apps/"
 /** Use to store all apps' log files */
 #define LOG_FILE_PATH                  APP_COMM_PATH"logs/"
 /** Use to store all apps' configure files */
@@ -65,7 +67,7 @@
 #define F_NAME_COMM_UPLOCK             "update.lock"
 
 /**
- * The app's log and configure path names 
+ * The app's log and configure path names
  * must be same with the app's name.
  * ex: app's name is "dev_watchdog"
  *     app's log file path is LOG_FILE_PATH"dev_watchdog"
@@ -102,23 +104,21 @@
 /** The file path of file which stores the system max pid */
 #define SYS_PROC_MAX_PID_FILE           "/proc/sys/kernel/pid_max"
 
- 
-/************* Watchdag Constants Definition ***************/
+
+/************* Function Constants Definition ***************/
 typedef enum MITFuncRetValue {
     MIT_RETV_SUCCESS              = 0,
     MIT_RETV_FAIL                 = -1,
-    MIT_RETV_HAS_OPENED           = -2,
-    MIT_RETV_PARAM_EMPTY          = -100,
+    MIT_RETV_PARAM_ERROR          = -100,
     MIT_RETV_OPEN_FILE_FAIL       = -101,
-    MIT_RETV_ALLOC_MEM_FAIL       = -102
+    MIT_RETV_ALLOC_MEM_FAIL       = -102,
+    MIT_RETV_TIMEOUT              = -103
 } MITFuncRetValue;
 
 /**
  *  WD_PG_CMD_REGISTER:     app <---register---> watchdog
  *  WD_PG_CMD_FEED:         app <-----feed-----> watchdog
  *  WD_PG_CMD_UNREGISTER:   app <--unregister--> watchdog
- *  WD_PG_CMD_SELF_UNREG:   app ---unregister--> app
- *                          app <--unregister--> watchdog
  *
  *  WD_PG_CMD_SELF_UNREG: main thread send a UDP to self to start unregister function.
  */
@@ -126,7 +126,6 @@ typedef enum MITWatchdogPgCmd {
     WD_PG_CMD_REGISTER      = 1,
     WD_PG_CMD_FEED          = 2,
     WD_PG_CMD_UNREGISTER    = 3,
-    WD_PG_CMD_SELF_UNREG    = 4,
     WD_PG_CMD_UNKNOWN       = -1
 } MITWatchdogPgCmd;
 
@@ -227,7 +226,7 @@ struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len);
 
 /**
  * Create a new watchdog return package.
- * 
+ *
  * @param pg_len    : the length of the package;
  * @param error_num : refer  enum MITWatchdogPgError;
  * @return on success the package point will be return,
@@ -265,7 +264,7 @@ size_t strip_string_space(char **tar_str);
 int compare_two_cmd_line(const char *f_cmdline, const char *s_cmdline);
 
 /**
- * Write content into file_path. 
+ * Write content into file_path.
  * The file_path file will be open with "w" flag.
  * @param file_path: the absolute file path, ex: /tmp/watchdog/watchdog.conf
  * @param content:   the content will be written into file

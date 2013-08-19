@@ -69,7 +69,7 @@ void wd_send_register_pg(evutil_socket_t fd)
         addr_server.sin_family      = AF_INET;
         addr_server.sin_port        = htons(wd_port);
         addr_server.sin_addr.s_addr = inet_addr(UDP_IP_SER);
-        
+
         int pg_len = 0;
         void *pg_reg = wd_pg_register_new(&pg_len, feed_configure);
         if (pg_reg > 0) {
@@ -136,7 +136,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
         if (len > 0) {
             MITWatchdogPgCmd cmd = wd_get_net_package_cmd(msg);
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Server CMD:%d", cmd);
-            
+
             struct wd_pg_return *ret_pg = wd_pg_return_unpg(msg, (int)len);
             if (ret_pg) {
                 if (cmd == WD_PG_CMD_REGISTER) {
@@ -213,7 +213,7 @@ void *start_libevent_udp_feed(void *arg)
     if (fcntl(app_socket_fd, F_SETFD, FD_CLOEXEC) < 0) {
         MITLog_DetErrPrintf("fcntl() failed");
     }
-    
+
     /**
      * To get the app's local port so we bind first
      */
@@ -225,7 +225,7 @@ void *start_libevent_udp_feed(void *arg)
     if (bind(app_socket_fd, (struct sockaddr *)&addr_self, sizeof(addr_self)) < 0) {
         MITLog_DetErrPrintf("bind() failed");
     }
-    
+
     struct event_base *ev_base = event_base_new();
     if (!ev_base) {
         MITLog_DetErrPrintf("event_base_new() failed");
@@ -247,9 +247,9 @@ void *start_libevent_udp_feed(void *arg)
     evutil_timerclear(&tv);
     tv.tv_sec = feed_configure->feed_period;
     event_add(&timeout, &tv);
-    
+
     event_base_dispatch(ev_base);
-    
+
 EVENT_BASE_FREE_TAG:
     event_base_free(ev_base);
 CLOSE_FD_TAG:
@@ -312,7 +312,7 @@ MITFuncRetValue unregister_watchdog()
         }
         sleep(2);
     }
-    
+
 RETURN_FUNC_TAG:
     pthread_mutex_destroy(&conf_mutex);
     return ret;
@@ -324,7 +324,7 @@ MITFuncRetValue create_feed_thread(struct feed_thread_configure *feed_conf)
         feed_conf->feed_period == 0 ||
         strlen(feed_conf->cmd_line) == 0) {
         MITLog_DetPuts(MITLOG_LEVEL_ERROR, "paramaters error");
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     feed_configure = feed_conf;
     wd_confirmed_register = WD_CONF_REG_NOT_CONF;
@@ -339,7 +339,7 @@ MITFuncRetValue create_feed_thread(struct feed_thread_configure *feed_conf)
     if(pthread_mutex_unlock(&conf_mutex) != 0) {
         MITLog_DetErrPrintf("pthread_mutex_unlock() failed");
     }
-    
+
     int ret = pthread_create(&thread, NULL, start_libevent_udp_feed, NULL);
     if (ret != 0) {
         MITLog_DetErrPrintf("pthread_create() failed");

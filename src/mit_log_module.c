@@ -80,17 +80,17 @@ static inline void MITGetLogFilePathPrefix(MITLogFileIndex aryIndex, char *chrAr
 MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFile, long long *fileSize)
 {
     const char *fileSuffix = MITLogFileSuffix[aryIndex];
-    
+
     // pattern:  TestApp.comm.*
     char logNumPattern[MITLOG_MAX_LOG_FILE_LEN] = {0};
     sprintf(logNumPattern, "%s%s%s", applicationName, fileSuffix, ".*");
     // origin log file name
     char originFileName[MITLOG_MAX_LOG_FILE_LEN] = {0};
     sprintf(originFileName, "%s%s", applicationName, fileSuffix);
-    
+
     DIR *dirfd = NULL;
     struct dirent *entry = NULL;
-    
+
     if ((dirfd = opendir(appLogFilePath)) == NULL) {
         MIT_derrprintf("opendir() faild");
         return MIT_RETV_FAIL;
@@ -150,7 +150,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
     MIT_dprintf("currentMaxFileNum:%d  nextStoreFile:%s", currentMaxFileNum, nextStoreFile);
 
     closedir(dirfd);
-   
+
     return MIT_RETV_SUCCESS;
 }
 
@@ -161,7 +161,7 @@ void MITLogCopyFile(FILE *fromFP, FILE *toFP)
     long long nread;
     // return to the start of the origin file
     fseek(fromFP, 0L, SEEK_SET);
-    
+
     while ((nread=fread(buf, sizeof(char), 1024*10, fromFP))) {
         char *outp = buf;
         long long nwritten;
@@ -190,7 +190,7 @@ void MITLogWriteFile(MITLogFileIndex aryIndex, char *msgStr, long long msgSize)
     long long fileLeftSize = MITLOG_MAX_FILE_SIZE - originFileSize;
     MIT_dprintf("fileLeftSize:%lld  originFileWroteSize:%lld  msgSize:%lld", fileLeftSize,\
 			 originFileSize, msgSize);
-    
+
     // 2. check whether the origin file has enough space
     if (fileLeftSize < msgSize) {
         MIT_dputs("Oringin file will be Written into next stroe file");
@@ -207,10 +207,10 @@ void MITLogWriteFile(MITLogFileIndex aryIndex, char *msgStr, long long msgSize)
         // empty the origin file this step MUST be executed.
         int ret = ftruncate(fileno(originFilePointers[aryIndex]), 0);
         if (ret == -1) {
-            MIT_derrprintf("ftruncate() failed:");          
+            MIT_derrprintf("ftruncate() failed:");
         }
     }
-    
+
     // 3. write buffer into origin file
     char *outp = msgStr;
     long long num = msgSize;
@@ -256,7 +256,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
         return MIT_RETV_HAS_OPENED;
     }
     mit_log_opened_flag = 1;
-    
+
 #if MITLOG_DEBUG_ENABLE
     originFilePointers[MITLOG_INDEX_COMM_FILE] = stdout;
     originFilePointers[MITLOG_INDEX_WARN_FILE] = stderr;
@@ -268,7 +268,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
     if (strlen(appName) == 0 || pathLen == 0 || pathLen > maxPath) {
         MIT_dprintf("ERROR: %s %d", "appName can't be empty; \
                     pathLen can't be empty and legth litter than", maxPath);
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     memset(applicationName, 0, sizeof(applicationName));
     memset(appLogFilePath, 0, sizeof(appLogFilePath));
@@ -333,7 +333,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
             return MIT_RETV_OPEN_FILE_FAIL;
         }
     }
-        
+
     return MIT_RETV_SUCCESS;
 #endif
 }
@@ -382,12 +382,12 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
     }
     sprintf(tarMessage, "%s %s\n", timeStr, tarp);
     sumLen = strlen(tarMessage);
-    
+
     free(tarp);
     np = tarp = NULL;
     //MIT_dprintf("target message:%s", tarMessage);
     MITLogFileIndex aryIndex = MITGetIndexForLevel(level);
-    
+
 #if MITLOG_DEBUG_ENABLE
     fprintf(originFilePointers[aryIndex], "%-10s %s", MITLogLevelHeads[aryIndex], tarMessage);
 #else
@@ -401,13 +401,13 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
     } else {
         MIT_dputs("String write into file*****************");
         pthread_rwlock_unlock(&bufferRWlock);
-        
+
         pthread_rwlock_rdlock(&bufferRWlock);
         // 1. write the buffer into file
         long long firstLen = strlen(logFileBuffer[aryIndex]);
         MITLogWriteFile(aryIndex, logFileBuffer[aryIndex], firstLen);
         pthread_rwlock_unlock(&bufferRWlock);
-        
+
         pthread_rwlock_wrlock(&bufferRWlock);
         // empty the buffer
         memset(logFileBuffer[aryIndex], 0, MITLogBufferMaxSize[aryIndex]);
@@ -422,7 +422,7 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
             MITLogWriteFile(aryIndex, tarMessage, sumLen);
         }
     }
-    
+
     free(tarMessage);
     tarMessage = NULL;
 #endif
@@ -451,7 +451,7 @@ void MITLogClose(void)
     for (int j=MITLOG_INDEX_COMM_FILE; j<=MITLOG_INDEX_ERROR_FILE; ++j) {
         fclose(originFilePointers[j]);
         originFilePointers[j] = NULL;
-        
+
         free(logFilePaths[j]);
         logFilePaths[j] = NULL;
         free(logFileBuffer[j]);

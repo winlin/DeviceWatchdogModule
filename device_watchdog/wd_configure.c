@@ -48,7 +48,7 @@ struct wd_configure* get_wd_configure(void)
     wd_conf->current_pid                = getpid();
     wd_conf->default_feed_period        = DEFAULT_FEED_PERIOD;
     wd_conf->max_missed_feed_times      = DEFAULT_MAX_MISSED_FEED_TIMES;
-    
+
     FILE *conf_fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_CONF, "r");
     if (conf_fp == NULL) {
         if (errno == ENOENT) {
@@ -67,7 +67,7 @@ struct wd_configure* get_wd_configure(void)
             }
             ret = fprintf(conf_fp, "%s = %lu\n%s = %lu\n",
                     CONF_KNAME_MISSED_TIMES, wd_conf->max_missed_feed_times,
-                    CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period);	
+                    CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period);
             if (ret < 0) {
                 MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
                 goto CLOSE_FILE_TAG;
@@ -117,7 +117,7 @@ struct wd_configure* get_wd_configure(void)
                              "Confige file content error. Maybe lack a '=' between key and value");
             goto FREE_LINE_TAG;
         }
-        
+
         char *value_str = NULL;
         token = strtok_r(NULL, CONF_KEY_VALUE_DIVIDE_STR, &tmpstr);
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "value_str token:%s", token);
@@ -134,7 +134,7 @@ struct wd_configure* get_wd_configure(void)
             free(key_name);
             goto FREE_LINE_TAG;
         }
-        
+
         strip_string_space(&key_name);
         strip_string_space(&value_str);
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "key:%s  value:%s", key_name, value_str);
@@ -176,12 +176,12 @@ struct wd_configure* get_wd_configure(void)
             node->app_info.app_pid = (pid_t)get_pid_with_comm(node->app_info.app_name);
             if (node->app_info.app_pid > 0) {
                 node->app_info.app_last_feed_time = time(NULL);
-                MITLog_DetPrintf(MITLOG_LEVEL_COMMON, 
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
                                  "get the app's pid:%d and update the app_last_feed_time:%d",
                                  node->app_info.app_pid,
                                  node->app_info.app_last_feed_time);
             }
-            
+
             // get cmd line
             token = strtok_r(NULL, APP_NAME_CMDLINE_DIVIDE_STR, &tmpstr);
             if (token) {
@@ -205,7 +205,7 @@ struct wd_configure* get_wd_configure(void)
                 free(node);
                 goto FREE_LINE_TAG;
             }
-       
+
             node->app_info.app_period = wd_conf->default_feed_period;
             if (wd_conf->apps_list_head == NULL) {
                 /** the first node */
@@ -257,7 +257,7 @@ MITFuncRetValue save_monitor_apps_info()
                 tmp->app_info.app_name,
                 tmp->app_info.cmd_line);
         if (ret < 0) {
-           MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF); 
+           MITLog_DetErrPrintf("fprintf() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
         }
         tmp = tmp->next_node;
     }
@@ -274,13 +274,13 @@ void print_wd_configure(struct wd_configure *wd_conf)
                      CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period,
                      CONF_KNAME_WD_PID, wd_conf->current_pid,
                      CONF_KNAME_APPS_COUNT, wd_conf->monitored_apps_count);
-    
+
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s:", CONF_KANME_APPS_LIST);
     struct monitor_app_info_node *tmp = wd_conf->apps_list_head;
     while (tmp) {
         MITLogWrite(MITLOG_LEVEL_COMMON,
                     "AppName:%s CmdLine:%s",
-                    tmp->app_info.app_name, 
+                    tmp->app_info.app_name,
                     tmp->app_info.cmd_line);
         tmp = tmp->next_node;
     }
@@ -302,7 +302,7 @@ void free_wd_configure(struct wd_configure *wd_conf)
 MITFuncRetValue update_monitored_app_time(struct wd_pg_action *action_pg)
 {
     if (action_pg == NULL) {
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
     while (tmp) {
@@ -318,7 +318,7 @@ MITFuncRetValue update_monitored_app_time(struct wd_pg_action *action_pg)
 MITFuncRetValue unregister_monitored_app(struct wd_pg_action *action_pg)
 {
     if (action_pg == NULL) {
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
     struct monitor_app_info_node *pre_p = NULL;
@@ -353,7 +353,7 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         return WD_PG_ERR_REGISTER_FAIL;
     }
     int ret = WD_PG_ERR_SUCCESS;
-    
+
     /** Check whether the app has been registered
      *  If it has existed just update the app_last_feed_time.
      */
@@ -379,7 +379,7 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         }
         tmp = tmp->next_node;
     }
-    
+
     struct monitor_app_info_node *node = calloc(1, sizeof(struct monitor_app_info_node));
     if (node == NULL) {
         MITLog_DetErrPrintf("calloc() failed");
@@ -393,7 +393,7 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         goto FREE_NODE_TAG;
     }
     strncpy(node->app_info.cmd_line, reg_pg->cmd_line, reg_pg->cmd_len);
-    
+
     node->app_info.app_name = calloc(reg_pg->name_len + 1, sizeof(char));
     if (node->app_info.app_name == NULL) {
         MITLog_DetErrPrintf("calloc() failed");
@@ -402,7 +402,7 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         goto FREE_NODE_TAG;
     }
     strncpy(node->app_info.app_name, reg_pg->app_name, reg_pg->name_len);
-    
+
     node->app_info.app_pid              = reg_pg->pid;
     node->app_info.app_period           = reg_pg->period <= 0 ? wd_configure->default_feed_period : reg_pg->period;
     node->app_info.app_last_feed_time   = time(NULL);
@@ -416,13 +416,13 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         wd_configure->apps_list_tail = node;
     }
     wd_configure->monitored_apps_count++;
-    
+
     if (save_monitor_apps_info() != MIT_RETV_SUCCESS) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "save_monitor_apps_info() failed");
     }
-    
+
     return ret;
-    
+
 FREE_NODE_TAG:
     free(node);
 ERR_RETURN_TAG:
@@ -458,7 +458,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
                          "addrlen:%d    src_port:%d",
                          addrlen, ntohs(src_addr.sin_port));
-        
+
         if (len > 0) {
             short cmd = wd_get_net_package_cmd(msg);
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Client CMD:%d", cmd);
@@ -507,7 +507,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_monitored_app_time() \
                                          failed: pid=%d hasn't been register", feed_pg->pid);
                         err_num = WD_PG_ERR_FEED_FAIL;
-                    } 
+                    }
                     /** send feed success or fail package */
                     MITFuncRetValue ret = send_pg_back(fd, &src_addr, WD_PG_CMD_FEED, err_num);
                     if (ret != MIT_RETV_SUCCESS) {
@@ -556,30 +556,30 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
     /** at first kill that app */
     if (app_info->app_pid > 0) {
         char app_comm[MAX_F_NAME_LEN] = {0};
-        /** 
+        /**
          * If the app_pid still belongs to the monitored app
          * then kill() will be called.
          */
         get_comm_with_pid(app_info->app_pid, app_comm);
         if (strcmp(app_info->app_name, app_comm) == 0) {
-            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
                              "%s with pid=%lld will be killed",
-                             app_info->app_name, 
+                             app_info->app_name,
                              app_info->app_pid);
             int ret = kill(app_info->app_pid, SIGKILL);
             if (ret < 0) {
                 MITLog_DetErrPrintf("kill() process:%d failed", app_info->app_pid);
-            } 
+            }
         } else {
-            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
                              "%s with pid=%lld will be exec() without kill()",
-                             app_info->app_name, 
+                             app_info->app_name,
                              app_info->app_pid);
         }
     } else {
-        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, 
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
                              "%s with pid=%lld will be exec() without kill()",
-                             app_info->app_name, 
+                             app_info->app_name,
                              app_info->app_pid);
     }
     MITFuncRetValue f_ret = start_app_with_cmd_line(app_info->cmd_line);
@@ -592,8 +592,8 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
 {
     waitpid(-1, NULL, WNOHANG);
     /** check every app and decide whether special app should be restarted */
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, 
-                     "Current Monitored App Count:%d", 
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                     "Current Monitored App Count:%d",
                      wd_configure->monitored_apps_count);
     struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
     for (; tmp; tmp=tmp->next_node) {
@@ -601,12 +601,12 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void* data)
         time_t app_final_time   = (tmp->app_info.app_last_feed_time +
                                    wd_configure->max_missed_feed_times *
                                    tmp->app_info.app_period);
-        
+
         if (now_time > app_final_time) {
             MITLog_DetPrintf(MITLOG_LEVEL_WARNING,
                              "now:%d app final time:%d\n"
                              "app(old pid:%d) need to be restarted\n cmdline:%s",
-                             now_time, 
+                             now_time,
                              app_final_time,
                              tmp->app_info.app_pid,
                              tmp->app_info.cmd_line);
@@ -631,7 +631,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
 
     MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
     if (wd_conf == NULL) {
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     wd_configure = wd_conf;
 
@@ -641,7 +641,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
         func_ret = MIT_RETV_OPEN_FILE_FAIL;
         goto FUNC_EXIT_TAG;
     }
-    
+
     int set_value = 1;
     if(setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&set_value, sizeof(set_value)) < 0) {
         MITLog_DetErrPrintf("setsockopt() failed");
@@ -649,13 +649,13 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     if (fcntl(socket_fd, F_SETFD, FD_CLOEXEC) < 0) {
         MITLog_DetErrPrintf("fcntl() failed");
     }
-    
+
     memset(&addr_self, 0, sizeof(addr_self));
     addr_self.sin_family        = AF_INET;
     addr_self.sin_port          = 0;
     /** any local network card is ok */
     addr_self.sin_addr.s_addr   = INADDR_ANY;
-    
+
     if (bind(socket_fd, (struct sockaddr*)&addr_self, sizeof(addr_self)) < 0) {
         MITLog_DetErrPrintf("bind() failed");
         func_ret = MIT_RETV_FAIL;
@@ -682,7 +682,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
         func_ret = MIT_RETV_FAIL;
         goto CLOSE_FD_TAG;
     }
-    
+
     /** Add UDP server event */
     struct event socket_ev_r;
     event_assign(&socket_ev_r, ev_base, socket_fd, EV_READ|EV_PERSIST, socket_ev_r_cb, &socket_ev_r);
@@ -698,9 +698,9 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     evutil_timerclear(&tv);
     tv.tv_sec = WD_CHECK_TIME_INTERVAL;
     event_add(&timeout, &tv);
-    
+
     event_base_dispatch(ev_base);
-    
+
 EVENT_BASE_FREE_TAG:
     event_base_free(ev_base);
 CLOSE_FD_TAG:

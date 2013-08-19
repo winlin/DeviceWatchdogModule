@@ -24,7 +24,6 @@
 #ifndef MITLogMoudle_H
 #define MITLogMoudle_H
 
-#include "mit_data_define.h"
 #include <string.h>
 #include <errno.h>
 /** debug switch macro */
@@ -37,9 +36,18 @@
  */
 #define MITLOG_DEBUG_ENABLE      1
 
+typedef enum MITLogFuncRetValue {
+    MIT_RETV_SUCCESS              = 0,
+    MIT_RETV_FAIL                 = -1,
+    MIT_RETV_HAS_OPENED           = -2,
+    MIT_RETV_PARAM_ERROR          = -100,
+    MIT_RETV_OPEN_FILE_FAIL       = -101,
+    MIT_RETV_ALLOC_MEM_FAIL       = -102
+} MITLogFuncRetValue;
+
 #define MITLOG_FILE_INDEX_NUM      3
 typedef enum MITLogFileIndex {
-    MITLOG_INDEX_COMM_FILE       = 0,                // num should start from 0 and keep continuately 
+    MITLOG_INDEX_COMM_FILE       = 0,                // num should start from 0 and keep continuately
     MITLOG_INDEX_WARN_FILE       = 1,
     MITLOG_INDEX_ERROR_FILE      = 2
 } MITLogFileIndex;
@@ -69,20 +77,20 @@ typedef enum MITLogMaxSize {
  * @param: appName     The name of application;
  *                     If the length bigger than MITLOG_MAX_APP_NAME_LEN,
  *                     the name will be truncated.
- * @returns: enum MITFuncRetValue
+ * @returns: enum MITLogFuncRetValue
  *
  */
-MITFuncRetValue MITLogOpen(const char *appName, const char*logPath);
+MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath);
 
 /**
- * This function log the message into files or stdout/stderr 
+ * This function log the message into files or stdout/stderr
  *      which depends on the definition of MITLOG_DEBUG_ENABLE flag.
  * @param: level     the log level of message.
  * @returns: MITLOG_RETV_ALLOC_MEM_FAIL
  *           MITLOG_RETV_SUCCESS
  *
  */
-MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...);
+MITLogFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...);
 
 /**
  * These macro defination can be used print more detail info with __func__ and __LINE__

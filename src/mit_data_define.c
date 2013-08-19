@@ -42,8 +42,8 @@ void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
         return NULL;
     }
     strip_string_space(&cmd_line);
-     // 2 is for the ';' between name & cmd line and the '\0'    
-    size_t cmd_name_len = strlen(app_name) + strlen(cmd_line) + 2; 
+     // 2 is for the ';' between name & cmd line and the '\0'
+    size_t cmd_name_len = strlen(app_name) + strlen(cmd_line) + 2;
     *pg_len = sizeof(short)*2 + sizeof(int)*2 + (int)cmd_name_len;
     void *pg = calloc(*pg_len, sizeof(char));
     if (pg == NULL) {
@@ -79,8 +79,8 @@ void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
     free(cmd_line);
     free(app_name);
     return pg;
-    
-    
+
+
 }
 struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
 {
@@ -93,7 +93,7 @@ struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
-    
+
     short tmp_short = 0;
     // cmd
     memcpy(&tmp_short, pg, sizeof(short));
@@ -105,7 +105,7 @@ struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
     int tmp_int = 0;
     memcpy(&tmp_int, pg+sizeof(short)*2, sizeof(int));
     pg_reg->pid = ntohl(tmp_int);
-    // ignore name_cmd_len 
+    // ignore name_cmd_len
     // app_name
     char *p_cmd = pg+sizeof(short)*2+sizeof(int)*2;
     char *tmpstr, *token;
@@ -167,7 +167,7 @@ void *wd_pg_action_new(int *pg_len, MITWatchdogPgCmd cmd, int pid)
     // pid
     int tmp_int = htonl(pid);
     memcpy(pg+sizeof(short)*2, &tmp_int, sizeof(int));
-    
+
     return pg;
 }
 struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len)
@@ -181,7 +181,7 @@ struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len)
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
-    
+
     short tmp_short = 0;
     // cmd
     memcpy(&tmp_short, pg, sizeof(short));
@@ -224,7 +224,7 @@ struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len)
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
-    
+
     short tmp_short = 0;
     // cmd
     memcpy(&tmp_short, pg, sizeof(short));
@@ -254,7 +254,7 @@ size_t strip_string_space(char **tar_str)
             if (tar_str == NULL) {
                 MITLog_DetErrPrintf("calloc() failed");
             } else {
-                strncpy(*tar_str, src_str + h_space, len-1);    
+                strncpy(*tar_str, src_str + h_space, len-1);
                 free(src_str);
                 return (len-1);
             }
@@ -403,7 +403,7 @@ void get_comm_with_pid(long long int pid, char* app_comm)
     if (comm_fp == NULL) {
         MITLog_DetErrPrintf("fopen() %s failed", app_comm_path);
         return;
-    } 
+    }
     int scan_num = fscanf(comm_fp, "%s", app_comm);
     if (scan_num <= 0) {
         MITLog_DetErrPrintf("fscanf() %s failed", app_comm_path);
@@ -422,7 +422,7 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
         strlen(file_name) == 0 ||
         strlen(content) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "paramaters can't be empty");
-        return MIT_RETV_PARAM_EMPTY;
+        return MIT_RETV_PARAM_ERROR;
     }
     /** create the configure path for the app */
     char file_path[MAX_AB_PATH_LEN] = {0};
@@ -475,7 +475,7 @@ void get_app_version(const char *app_name, char *ver_str)
         MITLog_DetErrPrintf("call fopen() failed:%s", file_path);
         return ;
     }
-    
+
     int scan_num = fscanf(conf_fp, "%s", ver_str);
     if (scan_num <= 0) {
         MITLog_DetErrPrintf("fscanf() %s failed", file_path);
@@ -484,7 +484,7 @@ void get_app_version(const char *app_name, char *ver_str)
                          "get app:%s verson number:%s",
                          app_name,
                          ver_str);
-    }    
+    }
     fclose(conf_fp);
 }
 

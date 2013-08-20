@@ -388,6 +388,28 @@ long long int get_pid_with_comm(const char *comm)
     return 0;
 }
 
+int reverse_compare_string(const char *str_one, const char *str_two)
+{
+    const char *shorter_str = str_one;
+    const char *longer_str  = str_two;
+    if(strlen(str_one) > strlen(str_two)) {
+        shorter_str = str_two;
+        longer_str  = str_one;
+    }
+    int smaller = strlen(shorter_str);
+    int longer  = strlen(longer_str);
+    int i = 1;
+    while(i<=smaller) {
+        if(shorter_str[smaller-i] == longer_str[longer-i]) {
+            ++i;
+            continue;
+        } else {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 void get_comm_with_pid(long long int pid, char* app_comm)
 {
     if (pid < 2) {

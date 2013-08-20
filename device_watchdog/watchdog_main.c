@@ -15,15 +15,15 @@
 int main(int argc, const char * argv[])
 {
     /**
-     * 1    . convert self into a daemon
-     *    don't change process's working directory to '/'
-     *    don't redirect stdin/stdou/stderr
+     * Convert self into a daemon
+     * don't change process's working directory to '/'
+     * don't redirect stdin/stdou/stderr
      */
     int ret = 0;
-	//ret = daemon(1, 1);
-	//if(ret == -1) {
-	//	perror("call daemon() failed!");
-	//}
+    //ret = daemon(1, 1);
+    if(ret == -1) {
+	perror("call daemon() failed!");
+    }
     MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD);
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());

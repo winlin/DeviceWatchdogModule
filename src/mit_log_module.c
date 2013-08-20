@@ -268,7 +268,7 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
     if (strlen(appName) == 0 || pathLen == 0 || pathLen > maxPath) {
         MIT_dprintf("ERROR: %s %d", "appName can't be empty; \
                     pathLen can't be empty and legth litter than", maxPath);
-        return MIT_RETV_PARAM_ERROR;
+        return MITLOG_RETV_PARAM_ERROR;
     }
     memset(applicationName, 0, sizeof(applicationName));
     memset(appLogFilePath, 0, sizeof(appLogFilePath));

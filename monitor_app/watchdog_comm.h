@@ -1,8 +1,8 @@
 #ifndef WATCHDOG_COMM_H
 #define WATCHDOG_COMM_H
 
-#include "../include/mit_log_module.h"
-#include "../include/mit_data_define.h"
+#include "include/mit_log_module.h"
+#include "include/mit_data_define.h"
 #include <sys/types.h>
 
 /**

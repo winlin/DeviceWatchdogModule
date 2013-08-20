@@ -206,11 +206,17 @@ MITFuncRetValue recvfrom_watchdog(int fd)
                 }
             }
             /* call the action interface for next action */
-            recvfrom_watchdog_callback(cmd, ret_pg->error);
-            free(ret_pg);
-            return MIT_RETV_SUCCESS;
+            // recvfrom_watchdog_callback(cmd, ret_pg->error);
+            if(ret_pg->error == WD_PG_ERR_SUCCESS) {
+            	free(ret_pg);
+            	return MIT_RETV_SUCCESS;
+            } else {
+            	free(ret_pg);
+            	return MIT_RETV_FAIL;
+            }
         } else {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "wd_pg_return_unpg() failed");
+            return MIT_RETV_FAIL;
         }
     } else {
         if(errno == EAGAIN ||
@@ -228,6 +234,11 @@ MITFuncRetValue send_wd_register_package(void)
     if (func_ret == MIT_RETV_SUCCESS) {
         /* wait for the watchdog return package */
         func_ret = recvfrom_watchdog(app_socket_fd);
+        if(func_ret != MIT_RETV_SUCCESS) {
+        	MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "recvfrom_watchdog() failed:%d", func_ret);
+        }
+    } else {
+    	MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "wd_send_register_pg() failed:%d", func_ret);
     }
     return func_ret;
 }

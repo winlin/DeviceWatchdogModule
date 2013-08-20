@@ -75,9 +75,9 @@ MITFuncRetValue wd_send_register_pg(int fd)
 
 MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
                                     unsigned long feed_period,
-                                    char *app_name,
-                                    char *cmd_line,
-                                    char *version_str)
+                                    const char *app_name,
+                                    const char *cmd_line,
+                                    const char *version_str)
 {
     if(strlen(app_name) == 0||
             strlen(cmd_line) == 0||

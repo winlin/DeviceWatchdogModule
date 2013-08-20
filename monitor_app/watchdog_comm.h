@@ -12,9 +12,9 @@
  */
  MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
                                      unsigned long feed_period,
-                                     char *app_name,
-                                     char *cmd_line,
-                                     char *version_str);
+                                     const char *app_name,
+                                     const char *cmd_line,
+                                     const char *version_str);
 
 /**
  * Initialize the UDP socket.

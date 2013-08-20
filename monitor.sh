@@ -7,9 +7,9 @@ while true ; do
 
 	echo "================= WATCHDOG INFO ==================="
 	echo ">>>>>>>WARNING LEVEL LOG"
-	tail /data/logs/watchdog/DeviceWatchdog.warn
+	tail /sdcard/bussale/logs/watchdog/DeviceWatchdog.warn
 	echo ">>>>>>>ERROR LEVEL LOG"
-	tail /data/logs/watchdog/DeviceWatchdog.err
+	tail /sdcard/bussale/logs/watchdog/DeviceWatchdog.err
 	echo "==================================================="
 
 	#check for when more apps will be started error is occour

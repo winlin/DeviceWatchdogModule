@@ -1,4 +1,4 @@
-$(APP_PROGNAME): ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) app_main.c create_feed_thread.c create_feed_thread.h 
+$(APP_PROGNAME): ../src/$(LOG_MODULE_M_NAME) ../src/$(DATA_DEFINE_M_NAME) monitor_main.c watchdog_comm.c watchdog_comm.h 
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 install:

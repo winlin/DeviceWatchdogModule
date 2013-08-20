@@ -13,28 +13,28 @@
 #include <stdlib.h>
 
 int main(int argc, const char * argv[])
-{    
+{
     /**
-     * 1. convert self into a daemon
+     * 1    . convert self into a daemon
      *    don't change process's working directory to '/'
      *    don't redirect stdin/stdou/stderr
      */
     int ret = 0;
-	ret = daemon(1, 1);
-	if(ret == -1) {
-		perror("call daemon() failed!");
-	}
+	//ret = daemon(1, 1);
+	//if(ret == -1) {
+	//	perror("call daemon() failed!");
+	//}
     MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD);
-    
+
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
-    
+
     char dir[1024];
     char *cwd_char = getcwd(dir, sizeof(dir));
     if (cwd_char == NULL) {
         MITLog_DetErrPrintf("getcwd() failed");
     }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
-    
+
     struct wd_configure *wd_conf = get_wd_configure();
     if (wd_conf == NULL) {
         MITLog_DetPuts(MITLOG_LEVEL_ERROR, "get_wd_configure() failed");
@@ -42,7 +42,7 @@ int main(int argc, const char * argv[])
         goto CLOSE_LOG_TAG;
     }
     print_wd_configure(wd_conf);
-    
+
     /** save pid info */
 	char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", wd_conf->current_pid);
@@ -59,8 +59,8 @@ int main(int argc, const char * argv[])
     }
 
     start_libevent_udp_server(wd_conf);
-    
-    free_wd_configure(wd_conf);    
+
+    free_wd_configure(wd_conf);
 CLOSE_LOG_TAG:
     MITLogClose();
     return ret;

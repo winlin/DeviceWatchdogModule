@@ -44,10 +44,18 @@ int main(int argc, const char * argv[])
         sleep(2);
     }
 
-    //TODO: periodly send the feed package
-    while(true) {
-        if(send_wd_feed_package() != MIT_RETV_SUCCESS) {
-            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_wd_feed_package() faild");
+    // periodically send the feed package
+    int i = 0;
+    while(i++ < 10) {
+        if((func_ret=send_wd_feed_package()) != MIT_RETV_SUCCESS) {
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_wd_feed_package() failed");
+            if(func_ret == MIT_RETV_TIMEOUT) {
+                MITLog_DetErrPrintf("Send feed package failed so the register package will be re-sent");
+                while (send_wd_register_package() != MIT_RETV_SUCCESS) {
+                    MITLog_DetPuts(MITLOG_LEVEL_COMMON, "send the register package one time...");
+                    sleep(1);
+                }
+            }
         }
         sleep(4);
     }

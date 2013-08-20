@@ -11,7 +11,7 @@
  *
  */
  MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
-                                     unsigned lone feed_period,
+                                     unsigned long feed_period,
                                      char *app_name,
                                      char *cmd_line,
                                      char *version_str);

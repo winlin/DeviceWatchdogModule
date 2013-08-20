@@ -77,7 +77,7 @@ static inline void MITGetLogFilePathPrefix(MITLogFileIndex aryIndex, char *chrAr
 }
 
 // get origin file size and next should be updated log file's name
-MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFile, long long *fileSize)
+MITLogFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFile, long long *fileSize)
 {
     const char *fileSuffix = MITLogFileSuffix[aryIndex];
 
@@ -93,7 +93,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
 
     if ((dirfd = opendir(appLogFilePath)) == NULL) {
         MIT_derrprintf("opendir() faild");
-        return MIT_RETV_FAIL;
+        return MITLOG_RETV_FAIL;
     }
     // 1 mean the '.' between num and suffix. TestApp.comm.1
     long long partLen = strlen(applicationName) + strlen(fileSuffix) + 1;
@@ -114,7 +114,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
             if (stat(logfilepath, &tstat) < 0) {
                 MIT_derrprintf("stat() %s faild", logfilepath);
                 closedir(dirfd);
-                return MIT_RETV_FAIL;
+                return MITLOG_RETV_FAIL;
             } else {
                 *fileSize = tstat.st_size;
             }
@@ -131,7 +131,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
             if (stat(logfilepath, &tstat) < 0) {
                 MIT_derrprintf("stat() %s faild", logfilepath);
                 closedir(dirfd);
-                return MIT_RETV_FAIL;
+                return MITLOG_RETV_FAIL;
             }
             if (minModifyTime == 0 || tstat.st_mtime < minModifyTime) {
                 minModifyTime = tstat.st_mtime;
@@ -151,7 +151,7 @@ MITFuncRetValue MITGetLogInfoByIndex(MITLogFileIndex aryIndex, char *nextStoreFi
 
     closedir(dirfd);
 
-    return MIT_RETV_SUCCESS;
+    return MITLOG_RETV_SUCCESS;
 }
 
 // use to copy file
@@ -249,11 +249,11 @@ static inline MITLogFileIndex MITGetIndexForLevel(MITLogLevel level)
 }
 
 /*************************** MITLog Module Function ********************************/
-MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
+MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
 {
     /** this use to avoid double times to open log module */
     if (mit_log_opened_flag == 1) {
-        return MIT_RETV_HAS_OPENED;
+        return MITLOG_RETV_HAS_OPENED;
     }
     mit_log_opened_flag = 1;
 
@@ -261,7 +261,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
     originFilePointers[MITLOG_INDEX_COMM_FILE] = stdout;
     originFilePointers[MITLOG_INDEX_WARN_FILE] = stderr;
     originFilePointers[MITLOG_INDEX_ERROR_FILE] = stderr;
-    return MIT_RETV_SUCCESS;
+    return MITLOG_RETV_SUCCESS;
 #else
     size_t pathLen = strlen(logPath);
     int maxPath = MITLOG_MAX_FILE_NAME_PATH_LEN - MITLOG_MAX_APP_NAME_LEN - 2;
@@ -281,13 +281,13 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
     int ret = pthread_rwlock_init(&bufferRWlock, NULL);
     if (ret != 0) {
         MIT_derrprintf("pthread_rwlock_init() failed:%d", ret);
-        return MIT_RETV_FAIL;
+        return MITLOG_RETV_FAIL;
     }
     // keep the log path exist
     ret = mkdir(appLogFilePath, S_IRWXU|S_IRWXG|S_IRWXO);
     if (ret == -1 && errno != EEXIST) {
         MIT_derrprintf("mkdir() failed:%d", ret);
-        return MIT_RETV_FAIL;
+        return MITLOG_RETV_FAIL;
     }
     // alloc memory
     for (int i = MITLOG_INDEX_COMM_FILE; i<= MITLOG_INDEX_ERROR_FILE; ++i) {
@@ -298,7 +298,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
                 logFilePaths[j] = NULL;
             }
             MIT_derrprintf("Allocate memroy Faild");
-            return MIT_RETV_ALLOC_MEM_FAIL;
+            return MITLOG_RETV_ALLOC_MEM_FAIL;
         }
         logFileBuffer[i] = (char *)calloc(MITLogBufferMaxSize[i], sizeof(char));
         if (!logFileBuffer[i]) {
@@ -311,7 +311,7 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
                 logFileBuffer[j] = NULL;
             }
             MIT_derrprintf("Allocate memroy Faild");
-            return MIT_RETV_ALLOC_MEM_FAIL;
+            return MITLOG_RETV_ALLOC_MEM_FAIL;
         }
     }
     // open files
@@ -330,22 +330,22 @@ MITFuncRetValue MITLogOpen(const char *appName, const char*logPath)
                 originFilePointers[j] = NULL;
             }
             MIT_derrprintf("Open %s Faild", logFilePaths[i]);
-            return MIT_RETV_OPEN_FILE_FAIL;
+            return MITLOG_RETV_OPEN_FILE_FAIL;
         }
     }
 
-    return MIT_RETV_SUCCESS;
+    return MITLOG_RETV_SUCCESS;
 #endif
 }
 
-MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
+MITLogFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
 {
     // 1. generate the string
     int n, size = 100;      // suppose the message need no more than 100 bytes
     char *tarp = NULL, *np = NULL;
     va_list ap;
     if ((tarp = malloc(size)) == NULL) {
-        return MIT_RETV_ALLOC_MEM_FAIL;
+        return MITLOG_RETV_ALLOC_MEM_FAIL;
     }
     while (1) {
         // try to print the allocated space
@@ -363,7 +363,7 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
         }
         if ((np = realloc(tarp, size)) == NULL) {
             free(tarp);
-            return MIT_RETV_ALLOC_MEM_FAIL;
+            return MITLOG_RETV_ALLOC_MEM_FAIL;
         } else {
             tarp = np;
         }
@@ -378,7 +378,7 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
     if (!tarMessage) {
         free(tarp);
         tarp = NULL;
-        return MIT_RETV_ALLOC_MEM_FAIL;
+        return MITLOG_RETV_ALLOC_MEM_FAIL;
     }
     sprintf(tarMessage, "%s %s\n", timeStr, tarp);
     sumLen = strlen(tarMessage);
@@ -426,7 +426,7 @@ MITFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
     free(tarMessage);
     tarMessage = NULL;
 #endif
-    return MIT_RETV_SUCCESS;
+    return MITLOG_RETV_SUCCESS;
 }
 
 void MITLogFlush(void)

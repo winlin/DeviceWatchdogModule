@@ -37,12 +37,12 @@
 #define MITLOG_DEBUG_ENABLE      1
 
 typedef enum MITLogFuncRetValue {
-    MIT_RETV_SUCCESS              = 0,
-    MIT_RETV_FAIL                 = -1,
-    MIT_RETV_HAS_OPENED           = -2,
-    MIT_RETV_PARAM_ERROR          = -100,
-    MIT_RETV_OPEN_FILE_FAIL       = -101,
-    MIT_RETV_ALLOC_MEM_FAIL       = -102
+    MITLOG_RETV_SUCCESS              = 0,
+    MITLOG_RETV_FAIL                 = -1,
+    MITLOG_RETV_PARAM_ERROR          = -100,
+    MITLOG_RETV_OPEN_FILE_FAIL       = -101,
+    MITLOG_RETV_ALLOC_MEM_FAIL       = -102,
+    MITLOG_RETV_HAS_OPENED           = -103
 } MITLogFuncRetValue;
 
 #define MITLOG_FILE_INDEX_NUM      3

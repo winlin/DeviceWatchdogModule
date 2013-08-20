@@ -2,10 +2,9 @@ WD_PROGNAME=dev_watchdog
 UPAPP_PROGNAME=update_apps_daemon
 APP_PROGNAME=app1
 
-#CC=gcc
-CC=arm-linux-androideabi-gcc
-
-CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
+CC=gcc
+#CC=arm-linux-androideabi-gcc
+#CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
 
 ifeq ($(CC),gcc)
 	INCLUDES= -I.
@@ -16,7 +15,7 @@ else
 endif
 
 rm= /bin/rm -rf
-INSTALLDIR= /data/apps/
+INSTALLDIR= /sdcard/bussale/apps/
 
 DEFS= -D_GNU_SOURCE
 DEFINES= $(INCLUDES) $(defs) -DSYS_UNIX=1

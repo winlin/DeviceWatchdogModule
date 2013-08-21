@@ -133,27 +133,7 @@ MITFuncRetValue init_udp_socket(void)
         close(app_socket_fd);
         return MIT_RETV_FAIL;
     }
-    /* To get the app's local port so we bind first */
-    struct sockaddr_in addr_self;
-    memset(&addr_self, 0, sizeof(addr_self));
-    addr_self.sin_family      = AF_INET;
-    addr_self.sin_port        = 0;
-    addr_self.sin_addr.s_addr = INADDR_ANY;
-    if (bind(app_socket_fd, (struct sockaddr *)&addr_self, sizeof(addr_self)) < 0) {
-        MITLog_DetErrPrintf("bind() failed");
-        close(app_socket_fd);
-        return MIT_RETV_FAIL;
-    }
-    /* save port info */
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Port:%d", ntohs(addr_self.sin_port));
-    char port_str[16] = {0};
-    sprintf(port_str, "%d", ntohs(addr_self.sin_port));
-    if(save_app_conf_info(feed_configure.app_name, F_NAME_COMM_PORT, port_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", feed_configure.app_name, F_NAME_COMM_PORT);
-        close(app_socket_fd);
-        return MIT_RETV_FAIL;
-    }
-    /* set the recieve/send timeout for 1 second */
+    MITLog_DetPuts(MITLOG_LEVEL_COMMON, "set the recieve/send timeout for 1 second");
     struct timeval socket_tv;
     socket_tv.tv_sec = UDP_REC_TIMEOUT_SEC;
     socket_tv.tv_usec = 0;
@@ -165,6 +145,40 @@ MITFuncRetValue init_udp_socket(void)
     socket_tv.tv_sec = UDP_SND_TIMEOUT_SEC;
     if(setsockopt(app_socket_fd, SOL_SOCKET, SO_SNDTIMEO, (void *)&socket_tv, sizeof(socket_tv)) < 0) {
         MITLog_DetErrPrintf("setsockopt() send timeout failed");
+        close(app_socket_fd);
+        return MIT_RETV_FAIL;
+    }
+
+    MITLog_DetPuts(MITLOG_LEVEL_COMMON, "to get the app's local port so need to bind first");
+    struct sockaddr_in addr_self;
+    memset(&addr_self, 0, sizeof(addr_self));
+    addr_self.sin_family      = AF_INET;
+    addr_self.sin_port        = 0;
+    addr_self.sin_addr.s_addr = INADDR_ANY;
+    if (bind(app_socket_fd, (struct sockaddr *)&addr_self, sizeof(addr_self)) < 0) {
+        MITLog_DetErrPrintf("bind() failed");
+        close(app_socket_fd);
+        return MIT_RETV_FAIL;
+    }
+    socklen_t addr_len = sizeof(addr_self);
+    memset(&addr_self, 0, sizeof(addr_self));
+    if (getsockname(app_socket_fd, (struct sockaddr *)&addr_self, &addr_len) < 0) {
+        MITLog_DetErrPrintf("getsockname() failed");
+        close(app_socket_fd);
+        return MIT_RETV_FAIL;
+    }
+    /* save port info */
+    long long int self_port = ntohs(addr_self.sin_port);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Port:%lld", self_port);
+    if(self_port == 0) {
+        MITLog_DetErrPrintf("Get port failed port=%lld", self_port);
+        close(app_socket_fd);
+        return MIT_RETV_FAIL;
+    }
+    char port_str[16] = {0};
+    sprintf(port_str, "%lld", self_port);
+    if(save_app_conf_info(feed_configure.app_name, F_NAME_COMM_PORT, port_str) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", feed_configure.app_name, F_NAME_COMM_PORT);
         close(app_socket_fd);
         return MIT_RETV_FAIL;
     }

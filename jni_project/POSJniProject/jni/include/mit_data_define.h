@@ -280,6 +280,12 @@ MITFuncRetValue write_file(const char *file_path, const char *content, size_t co
 long long int get_pid_with_comm(const char *comm);
 
 /**
+ * Compare two string from end to start, if one is another one's substring
+ * 0 will be returned else -1 will be returned.
+ */
+int reverse_compare_string(const char *str_one, const char *str_two);
+
+/**
  * Get application's comm whoes pid is "pid".
  * @return On success the comm of the pid will be set into app_comm.
  */

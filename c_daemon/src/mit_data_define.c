@@ -390,6 +390,7 @@ long long int get_pid_with_comm(const char *comm)
 
 int reverse_compare_string(const char *str_one, const char *str_two)
 {
+
     const char *shorter_str = str_one;
     const char *longer_str  = str_two;
     if(strlen(str_one) > strlen(str_two)) {
@@ -398,6 +399,9 @@ int reverse_compare_string(const char *str_one, const char *str_two)
     }
     int smaller = strlen(shorter_str);
     int longer  = strlen(longer_str);
+    if(smaller == 0) {
+        return -1;
+    }
     int i = 1;
     while(i<=smaller) {
         if(shorter_str[smaller-i] == longer_str[longer-i]) {

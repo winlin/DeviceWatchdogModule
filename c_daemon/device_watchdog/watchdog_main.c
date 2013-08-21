@@ -20,7 +20,7 @@ int main(int argc, const char * argv[])
      * don't redirect stdin/stdou/stderr
      */
     int ret = 0;
-    //ret = daemon(1, 1);
+    ret = daemon(1, 1);
     if(ret == -1) {
 	perror("call daemon() failed!");
     }

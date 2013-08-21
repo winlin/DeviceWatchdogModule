@@ -561,9 +561,9 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
          * then kill() will be called.
          */
         get_comm_with_pid(app_info->app_pid, app_comm);
-        if (strcmp(app_info->app_name, app_comm) == 0) {
+        if (reverse_compare_string(app_info->app_name, app_comm) == 0) {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
-                             "%s with pid=%lld will be killed",
+                             "%s with pid=%d will be killed",
                              app_info->app_name,
                              app_info->app_pid);
             int ret = kill(app_info->app_pid, SIGKILL);
@@ -572,13 +572,13 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
             }
         } else {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
-                             "%s with pid=%lld will be exec() without kill()",
+                             "%s with pid=%d will be exec() without kill() as for the pid does not belong to the app",
                              app_info->app_name,
                              app_info->app_pid);
         }
     } else {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
-                             "%s with pid=%lld will be exec() without kill()",
+                             "%s with pid=%d will be exec() without kill() as for the pid <=0",
                              app_info->app_name,
                              app_info->app_pid);
     }

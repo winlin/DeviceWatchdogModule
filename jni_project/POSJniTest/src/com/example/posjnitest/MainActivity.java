@@ -24,7 +24,11 @@ public class MainActivity extends Activity {
         int feedPeriod = 5;
         
         // save the app's info
-        int funcRet = nu.saveAppInfoConfig(Process.myPid(), feedPeriod, "mple.posjnitest", "com.example.posjnitest", "v1.0.1");
+        int funcRet = nu.saveAppInfoConfig(Process.myPid(), 
+        									feedPeriod, 
+        									"com.example.posjnitest", 
+        									"am start -n com.example.posjnitest/com.example.posjnitest.MainActivity", 
+        									"v1.0.1");
         if(funcRet == 0) {
         	// init the socket  
         	funcRet = nu.initUDPSocket();
@@ -41,7 +45,7 @@ public class MainActivity extends Activity {
         		}
         		// after register send feed package periodically
         		int i = 0;
-        		while(i++ < 20) {
+        		while(i++ < 40) {
         			if((funcRet=nu.sendWDFeedPackage()) != 0) {
         				Log.e(logTagStr, "Send Feed Package failed, the register package will be re-sent after 1 second");
         				// register to the watchdog

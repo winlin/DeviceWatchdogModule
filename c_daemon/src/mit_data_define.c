@@ -23,7 +23,10 @@ short wd_get_net_package_cmd(void *pg)
     return ntohs(tmp_short);
 }
 
-void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
+void *wd_pg_register_new(int *pg_len,
+                         short period,
+                         int thread_id,
+                         struct feed_thread_configure *feed_conf)
 {
     if (pg_len == NULL || feed_conf == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "pg_len can't be NULL");
@@ -44,7 +47,6 @@ void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
     strip_string_space(&cmd_line);
      // 2 is for the ';' between name & cmd line and the '\0'
     size_t cmd_name_len = strlen(app_name) + strlen(cmd_line) + 2;
-    *pg_len = sizeof(short)*2 + sizeof(int)*2 + (int)cmd_name_len;
     void *pg = calloc(*pg_len, sizeof(char));
     if (pg == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
@@ -52,19 +54,30 @@ void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
         free(app_name);
         return NULL;
     }
+    *pg_len = sizeof(short)*2 + sizeof(int)*3 + (int)cmd_name_len;
+
     // cmd
+    int offset = 0;
     short tmp_short = htons(WD_PG_CMD_REGISTER);
-    memcpy(pg, &tmp_short, sizeof(short));
+    memcpy(pg+offset, &tmp_short, sizeof(short));
     // period
-    tmp_short = htons(feed_conf->feed_period);
-    memcpy(pg+sizeof(short), &tmp_short, sizeof(short));
+    offset += sizeof(short);
+    tmp_short = htons(period);
+    memcpy(pg+offset, &tmp_short, sizeof(short));
     // pid
+    offset += sizeof(short);
     int tmp_int = htonl(feed_conf->monitored_pid);
-    memcpy(pg+sizeof(short)*2, &tmp_int, sizeof(int));
-    // cmd_len
+    memcpy(pg+offset, &tmp_int, sizeof(int));
+    // thread_id
+    offset += sizeof(int);
+    tmp_int = htonl(thread_id);
+    memcpy(pg+offset, &tmp_int, sizeof(int));
+    // name_cmd_len
+    offset += sizeof(int);
     tmp_int = htonl(cmd_name_len);
-    memcpy(pg+sizeof(short)*2+sizeof(int), &tmp_int, sizeof(int));
-    // cmd_line
+    memcpy(pg+offset, &tmp_int, sizeof(int));
+    // name_cmd_line
+    offset += sizeof(int);
     char *name_cmd_line = calloc(cmd_name_len + 1, sizeof(char));
     if (name_cmd_line == NULL) {
         MITLog_DetErrPrintf("calloc failed");
@@ -74,14 +87,13 @@ void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf)
         return NULL;
     }
     sprintf(name_cmd_line, "%s;%s", app_name, cmd_line);
-    memcpy(pg+sizeof(short)*2+sizeof(int)*2, name_cmd_line, cmd_name_len);
+    memcpy(pg+offset, name_cmd_line, cmd_name_len);
     free(name_cmd_line);
     free(cmd_line);
     free(app_name);
     return pg;
-
-
 }
+
 struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
 {
     if (pg == NULL || pg_len < 1) {
@@ -96,19 +108,28 @@ struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
 
     short tmp_short = 0;
     // cmd
-    memcpy(&tmp_short, pg, sizeof(short));
+    int offset = 0;
+    memcpy(&tmp_short, pg+offset, sizeof(short));
     pg_reg->cmd = ntohs(tmp_short);
     // period
-    memcpy(&tmp_short, pg+sizeof(short), sizeof(short));
+    offset += sizeof(short);
+    memcpy(&tmp_short, pg+offset, sizeof(short));
     pg_reg->period = ntohs(tmp_short);
     // pid
+    offset += sizeof(short);
     int tmp_int = 0;
-    memcpy(&tmp_int, pg+sizeof(short)*2, sizeof(int));
+    memcpy(&tmp_int, pg+offset, sizeof(int));
     pg_reg->pid = ntohl(tmp_int);
+    // thread_id
+    offset += sizeof(int);
+    memcpy(&tmp_int, pg+offset, sizeof(int));
+    pg_reg->thread_id = ntohl(tmp_int);
     // ignore name_cmd_len
-    // app_name
-    char *p_cmd = pg+sizeof(short)*2+sizeof(int)*2;
-    char *tmpstr, *token;
+    offset += sizeof(int);
+    // app_name and cmd_line
+    offset += sizeof(int);
+    char *p_cmd = pg + offset;
+    char *tmpstr = NULL, *token = NULL;
     token = strtok_r(p_cmd, APP_NAME_CMDLINE_DIVIDE_STR, &tmpstr);
     if (token) {
         pg_reg->app_name = strdup(token);
@@ -149,25 +170,39 @@ struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len)
     return pg_reg;
 }
 
-void *wd_pg_action_new(int *pg_len, MITWatchdogPgCmd cmd, int pid)
+void *wd_pg_action_new(int *pg_len,
+                       short period,
+                       int pid,
+                       int thread_id,
+                       MITWatchdogPgCmd cmd)
 {
     if (pg_len == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "pg_len can't be NULL");
         return NULL;
     }
-    *pg_len = sizeof(short)*2 + sizeof(int);
     void *pg = calloc(*pg_len, sizeof(char));
     if (pg == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
-    // cmd
-    short tmp_short = htons(cmd);
-    memcpy(pg, &tmp_short, sizeof(short));
-    // pid
-    int tmp_int = htonl(pid);
-    memcpy(pg+sizeof(short)*2, &tmp_int, sizeof(int));
+    *pg_len = sizeof(short)*2 + sizeof(int)*2;
 
+    // cmd
+    int offset = 0;
+    short tmp_short = htons(cmd);
+    memcpy(pg+offset, &tmp_short, sizeof(short));
+    // period or reserved
+    offset += sizeof(short);
+    tmp_short = htons(period);
+    memcpy(pg+offset, &tmp_short, sizeof(short));
+    // pid
+    offset += sizeof(short);
+    int tmp_int = htonl(pid);
+    memcpy(pg+offset, &tmp_int, sizeof(int));
+    // thread_id
+    offset += sizeof(int);
+    tmp_int = htonl(thread_id);
+    memcpy(pg+offset, &tmp_int, sizeof(int));
     return pg;
 }
 struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len)
@@ -181,36 +216,51 @@ struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len)
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
-
-    short tmp_short = 0;
     // cmd
-    memcpy(&tmp_short, pg, sizeof(short));
+    short tmp_short = 0;
+    int offset = 0;
+    memcpy(&tmp_short, pg+offset, sizeof(short));
     pg_action->cmd = ntohs(tmp_short);
+    // period
+    offset += sizeof(short);
+    memcpy(&tmp_short, pg+offset, sizeof(short));
+    pg_action->period = ntohs(tmp_short);
     // pid
     int tmp_int = 0;
-    memcpy(&tmp_int, pg+sizeof(short)*2, sizeof(int));
+    offset += sizeof(short);
+    memcpy(&tmp_int, pg+offset, sizeof(int));
     pg_action->pid = ntohl(tmp_int);
+    // thread_id
+    offset += sizeof(int);
+    memcpy(&tmp_int, pg+offset, sizeof(int));
+    pg_action->thread_id = ntohl(tmp_int);
+
     return pg_action;
 }
 
-void *wd_pg_return_new(int *pg_len, MITWatchdogPgCmd cmd, short error_num)
+void *wd_pg_return_new(int *pg_len,
+                       short error_num,
+                       MITWatchdogPgCmd cmd)
 {
     if (pg_len == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "pg_len can't be NULL");
         return NULL;
     }
-    *pg_len = sizeof(short)*2;
     void *pg = calloc(*pg_len, sizeof(char));
     if (pg == NULL) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "calloc() failed");
         return NULL;
     }
+    *pg_len = sizeof(short)*2;
+
     // cmd
+    int offset = 0;
     short tmp_short = htons(cmd);
     memcpy(pg, &tmp_short, sizeof(short));
     // error number
+    offset += sizeof(short);
     tmp_short = htons(error_num);
-    memcpy(pg+sizeof(short), &tmp_short, sizeof(short));
+    memcpy(pg+offset, &tmp_short, sizeof(short));
     return pg;
 }
 struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len)
@@ -225,12 +275,14 @@ struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len)
         return NULL;
     }
 
-    short tmp_short = 0;
     // cmd
+    short tmp_short = 0;
+    int offset = 0;
     memcpy(&tmp_short, pg, sizeof(short));
     pg_ret_feed->cmd = ntohs(tmp_short);
     // error number
-    memcpy(&tmp_short, pg+sizeof(short), sizeof(short));
+    offset += sizeof(short);
+    memcpy(&tmp_short, pg+offset, sizeof(short));
     pg_ret_feed->error = ntohs(tmp_short);
     return pg_ret_feed;
 }

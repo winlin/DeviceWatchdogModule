@@ -141,7 +141,6 @@ typedef enum MITWatchdogPgError {
 /************* Watchdag Package Definition ***************/
 struct feed_thread_configure {
     pid_t               monitored_pid;
-    unsigned long int   feed_period;
     char *              app_name;
     char *              cmd_line;
 };
@@ -150,6 +149,7 @@ struct wd_pg_register {
     short   cmd;
     short   period;
     int     pid;
+    int     thread_id;
     int     cmd_len;
     char *  cmd_line;
     int     name_len;
@@ -167,8 +167,9 @@ struct wd_pg_return {
  */
 struct wd_pg_action {
     short   cmd;
-    short   reserved;
+    short   period;
     int     pid;
+    int     thread_id;
 };
 
 /************* Watchdag Package Operation ***************/
@@ -186,12 +187,17 @@ short wd_get_net_package_cmd(void *pg);
  * Create a new watchdog register package.
  *
  * @param pg_len    : the length of the package;
+ * @param period    : the period of feed timeout;
+ * @param thread_id : the monitored thread id;
  * @param feed_conf : the monitored app's configure info;
  * @return on success the package point will be return,
  *         and the *pg_len will be set the length of the package;
  *         on error NULL will be returned
  */
-void *wd_pg_register_new(int *pg_len, struct feed_thread_configure *feed_conf);
+void *wd_pg_register_new(int *pg_len,
+                         short period,
+                         int thread_id,
+                         struct feed_thread_configure *feed_conf);
 
 /**
  * Unpackage a new watchdog register package.
@@ -207,12 +213,18 @@ struct wd_pg_register *wd_pg_register_unpg(void *pg, int pg_len);
  * Create a new watchdog action package.
  *
  * @param pg_len    : the length of the package;
+ * @param period    : the period of feed timeout;
  * @param pid       : the register's process id;
+ * @param thread_id : the monitored thread id;
  * @return on success the package point will be return,
  *         and the *pg_len will be set the length of the package;
  *         on error NULL will be returned
  */
-void *wd_pg_action_new(int *pg_len, MITWatchdogPgCmd cmd, int pid);
+void *wd_pg_action_new(int *pg_len,
+                       short period,
+                       int pid,
+                       int thread_id,
+                       MITWatchdogPgCmd cmd);
 
 /**
  * Unpackage a new watchdog action package.
@@ -233,7 +245,9 @@ struct wd_pg_action *wd_pg_action_unpg(void *pg, int pg_len);
  *         and the *pg_len will be set the length of the package;
  *         on error NULL will be returned
  */
-void *wd_pg_return_new(int *pg_len, MITWatchdogPgCmd cmd, short error_num);
+void *wd_pg_return_new(int *pg_len,
+                       short error_num,
+                       MITWatchdogPgCmd cmd);
 
 /**
  * Unpackage a new watchdog return package.

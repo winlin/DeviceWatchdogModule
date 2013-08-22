@@ -304,13 +304,19 @@ MITFuncRetValue update_monitored_app_time(struct wd_pg_action *action_pg)
     if (action_pg == NULL) {
         return MIT_RETV_PARAM_ERROR;
     }
-    struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
-    while (tmp) {
-        if (tmp->app_info.app_pid == action_pg->pid) {
-            tmp->app_info.app_last_feed_time = time(NULL);
-            return MIT_RETV_SUCCESS;
+    struct monitor_app_info_node *app_iter = wd_configure->apps_list_head;
+    while (app_iter) {
+        if (app_iter->app_info.app_pid == action_pg->pid) {
+            struct monitor_thread_info *th_iter = app_iter->app_info.thread_list_head;
+            while(th_iter) {
+                if(th_iter->thread_id == action_pg->thread_id) {
+                    th_iter->last_feed_time = time(NULL);
+                    return MIT_RETV_SUCCESS;
+                }
+                th_iter = th_iter->next_node;
+            }
         }
-        tmp = tmp->next_node;
+        app_iter = app_iter->next_node;
     }
     return MIT_RETV_FAIL;
 }
@@ -320,10 +326,23 @@ MITFuncRetValue unregister_monitored_app(struct wd_pg_action *action_pg)
     if (action_pg == NULL) {
         return MIT_RETV_PARAM_ERROR;
     }
-    struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
+    struct monitor_app_info_node *app_iter = wd_configure->apps_list_head;
     struct monitor_app_info_node *pre_p = NULL;
     while (tmp) {
         if (tmp->app_info.app_pid == action_pg->pid) {
+            struct monitor_thread_info *th_iter  = app_iter->app_info.thread_list_head;
+            struct monitor_thread_info *th_pre_p = NULL;
+            while(th_iter) {
+                if(th_iter->thread_id == action_pg->thread_id) {
+                    if(th_iter == app_iter->app_info.thread_list_head) {
+                        app_iter->app_info.thread_list_head = NULL;
+                    }
+                    th_iter->last_feed_time = time(NULL);
+                    return MIT_RETV_SUCCESS;
+                }
+                th_iter = th_iter->next_node;
+            }
+
             if (pre_p == NULL) {
                 wd_configure->apps_list_head = tmp->next_node;
             } else {
@@ -353,33 +372,74 @@ MITWatchdogPgError add_monitored_app(struct wd_pg_register *reg_pg)
         return WD_PG_ERR_REGISTER_FAIL;
     }
     int ret = WD_PG_ERR_SUCCESS;
-
     /** Check whether the app has been registered
      *  If it has existed just update the app_last_feed_time.
      */
-    struct monitor_app_info_node *tmp = wd_configure->apps_list_head;
-    while (tmp) {
-        if (tmp->app_info.app_pid == reg_pg->pid ||
-            strcmp(tmp->app_info.app_name, reg_pg->app_name) == 0) {
-            tmp->app_info.app_last_feed_time = time(NULL);
-            tmp->app_info.app_pid            = reg_pg->pid;
-            tmp->app_info.app_period         = reg_pg->period <= 0 ? wd_configure->default_feed_period : reg_pg->period;
-            if (strcmp(tmp->app_info.cmd_line, reg_pg->cmd_line) != 0) {
-                free(tmp->app_info.cmd_line);
-                tmp->app_info.cmd_line = calloc(reg_pg->cmd_len+1, sizeof(char));
-                if (tmp->app_info.cmd_line == NULL) {
+    struct monitor_app_info_node *app_iter = wd_configure->app_list_head;
+    while (app_iter) {
+        if (app_iter->app_pid == reg_pg->pid ||
+            strcmp(app_iter->app_name, reg_pg->app_name) == 0) {
+            /* update the app info */
+            app_iter->app_id = reg_pg->pid;
+            if (strcmp(app_iter->cmd_line, reg_pg->cmd_line) != 0) {
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                             "the pid:(%d) needs to update cmd line:\nold:%s\nnew:%s",
+                             app_iter->app_pid,
+                             app_iter->cmd_line,
+                             reg_pg->cmd_line);
+               free(app_iter->cmd_line);
+                app_iter->cmd_line = calloc(reg_pg->cmd_len+1, sizeof(char));
+                if (app_iter->cmd_line == NULL) {
                     MITLog_DetErrPrintf("calloc() failed");
                     ret = WD_PG_ERR_REGISTER_FAIL;
                     goto ERR_RETURN_TAG;
-                } else {
-                    strncpy(tmp->app_info.cmd_line, reg_pg->cmd_line, reg_pg->cmd_len);
                 }
             }
+            if (strcmp(app_iter->app_name, reg_pg->app_name) != 0) {
+                MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                             "the pid:(%d) needs to update app name:\nold:%s\nnew:%s",
+                             app_iter->app_pid,
+                             app_iter->app_name,
+                             reg_pg->app_name);
+               free(app_iter->app_name);
+                app_iter->app_name = calloc(reg_pg->app_name+1, sizeof(char));
+                if (app_iter->app_name == NULL) {
+                    MITLog_DetErrPrintf("calloc() failed");
+                    ret = WD_PG_ERR_REGISTER_FAIL;
+                    goto ERR_RETURN_TAG;
+                }
+            }
+            struct monitor_thread_info *th_iter = app_iter->thread_list_head;
+            while(th_iter) {
+                if(th_iter->thread_id == reg_pg->thread_id) {
+                    MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                                     "find the pid:thread_id(%d:%d) so update last feed time",
+                                     app_iter->app_pid,
+                                     th_iter->thread_id);
+                    th_iter->last_feed_time = time(NULL);
+                    return ret;
+                }
+                th_iter = th_iter->next_node;
+            }
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
+                                     "cannot find the pid:thread_id(%d:%d) so will add monitor thread",
+                                     app_iter->app_pid,
+                                     th_iter->thread_id);
+            struct monitor_thread_info *new_th_node = calloc(1, sizeof(struct monitor_thread_info));
+            if(new_th_node == NULL) {
+                MITLog_DetErrPrintf("calloc() failed");
+                ret = WD_PG_ERR_REGISTER_FAIL;
+                goto ERR_RETURN_TAG;
+            }
+            new_th_node->last_feed_time = time(NULL);
+            new_th_node->thread_period  = reg_pg->period <= 0 ? wd_configure->default_feed_period : reg_pg->period;
+            new_th_node->thread_id      = reg_pg->thread_id;
+            app_iter->thread_list_tail  = new_th_node;
             return ret;
         }
         tmp = tmp->next_node;
     }
-
+    // TODO:
     struct monitor_app_info_node *node = calloc(1, sizeof(struct monitor_app_info_node));
     if (node == NULL) {
         MITLog_DetErrPrintf("calloc() failed");

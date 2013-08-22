@@ -12,22 +12,27 @@
 #include <time.h>
 #include <unistd.h>
 
+struct monitor_thread_info {
+    /** identifer of the monitored thread */
+    int thread_id;
+    /** the feed period of the monitored thread */
+    short thread_period;
+    /** last feed timestamp, unit is second */
+    time_t last_feed_time;
+    struct monitor_thread_info *next_node;
+};
+
 struct monitor_app_info {
     /** app's name */
     char *app_name;
     /** command line to start the app */
     char *cmd_line;
-    /** the feed period of the app */
-    unsigned long int app_period;
     /** the app's process id */
     pid_t app_pid;
-    /** last feed timestamp, unit is second */
-    time_t app_last_feed_time;
-};
-
-struct monitor_app_info_node {
-    struct monitor_app_info_node *next_node;
-    struct monitor_app_info app_info;
+    /** the monitored threads list*/
+    struct monitor_thread_info *thread_list_head;
+    struct monitor_thread_info *thread_list_tail;
+    struct monitor_app_info *next_node;
 };
 
 struct wd_configure {
@@ -38,10 +43,8 @@ struct wd_configure {
     /** process id of watchdog daemon */
     pid_t current_pid;
     /** monitored apps list */
-    struct monitor_app_info_node *apps_list_head;
-    struct monitor_app_info_node *apps_list_tail;
-    /** monitored apps count */
-    unsigned int monitored_apps_count;
+    struct monitor_app_info *app_list_head;
+    struct monitor_app_info *app_list_tail;
 };
 
 /**

@@ -1,10 +1,10 @@
 WD_PROGNAME=dev_watchdog
 UPAPP_PROGNAME=update_apps_daemon
-APP_PROGNAME=app1
+APP_PROGNAME=app4
 
-#CC=gcc
-CC=arm-linux-androideabi-gcc
-CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
+CC=gcc
+#CC=arm-linux-androideabi-gcc
+#CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
 
 ifeq ($(CC),gcc)
 	INCLUDES= -I.

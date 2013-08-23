@@ -12,7 +12,7 @@
 #include "../include/mit_data_define.h"
 #include <sys/types.h>
 
-/**
+/*
  * Create the feed thread.
  * !!! The function will call pthread_detach(), so it resource will be
  *     auto released by system; if pthread_detach() failed, pthread_kill(SIGKILL)
@@ -24,7 +24,7 @@
  */
 MITFuncRetValue create_feed_thread(struct feed_thread_configure *feed_conf);
 
-/**
+/*
  * Unregister the app from watchdog.
  */
 MITFuncRetValue unregister_watchdog();

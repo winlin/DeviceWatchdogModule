@@ -7,8 +7,8 @@
 
 #define MIT_derrprintf(fmt, args...) printf("%s %d ERROR:%s: "fmt"\n", __func__, __LINE__, strerror(errno), ##args)
 
-/** logmodule debug switch macro */
-/**
+/* logmodule debug switch macro */
+/*
  * If define the marco message of log module will be printed into stdout.
  * It can be used when you want to debug the log module.
  *
@@ -67,7 +67,7 @@ static pthread_rwlock_t bufferRWlock;     // use for the logFileBuffer
 static FILE *originFilePointers[MITLOG_FILE_INDEX_NUM];
 
 
-/*************************** Inner Tools Function ********************************/
+/************************** Inner Tools Function ********************************/
 #ifndef MITLOG_DEBUG_ENABLE
 // return the log file path, exp: /data/logs/TestApp.comm
 static inline void MITGetLogFilePathPrefix(MITLogFileIndex aryIndex, char *chrAry)
@@ -248,10 +248,10 @@ static inline MITLogFileIndex MITGetIndexForLevel(MITLogLevel level)
     return MITLOG_INDEX_COMM_FILE;
 }
 
-/*************************** MITLog Module Function ********************************/
+/************************** MITLog Module Function ********************************/
 MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
 {
-    /** this use to avoid double times to open log module */
+    /* this use to avoid double times to open log module */
     if (mit_log_opened_flag == 1) {
         return MITLOG_RETV_HAS_OPENED;
     }

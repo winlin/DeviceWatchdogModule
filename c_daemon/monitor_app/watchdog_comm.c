@@ -190,6 +190,12 @@ MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
     return MIT_RETV_SUCCESS;
 }
 
+void free_appinfo_config(void)
+{
+    free(gl_feed_configure.app_name);
+    free(gl_feed_configure.cmd_line);
+}
+
 int init_udp_socket(void)
 {
     int socket_id = socket(AF_INET, SOCK_DGRAM, 0);
@@ -269,6 +275,7 @@ MITFuncRetValue recvfrom_watchdog(int fd)
     struct sockaddr_in src_addr;
     socklen_t addrlen = sizeof(src_addr);
     ssize_t len = recvfrom(fd, msg, sizeof(msg)-1, MSG_WAITALL, (struct sockaddr *)&src_addr, &addrlen);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "recieve back package len=%d", len);
     if (len > 0) {
         MITWatchdogPgCmd cmd = wd_get_net_package_cmd(msg);
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Server CMD:%d", cmd);
@@ -283,8 +290,7 @@ MITFuncRetValue recvfrom_watchdog(int fd)
             } else if (cmd == WD_PG_CMD_FEED) {
                 MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Server Feed Back");
                 if (ret_pg->error != WD_PG_ERR_SUCCESS) {
-                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send feed package failed:%d \
-                                         and rigister package will resend", ret_pg->error);
+                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send feed package failed:%d and rigister package will resend", ret_pg->error);
                 } else {
                     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "send feed package success");
                 }

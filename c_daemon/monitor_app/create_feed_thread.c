@@ -24,7 +24,7 @@
 #include <event2/event-config.h>
 #include <event2/util.h>
 
-/**
+/*
  * Use the macro temporary for test.
  * We read the port from the watchdog's port file late.
  */
@@ -160,7 +160,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                     }
                 } else if (cmd == WD_PG_CMD_SELF_UNREG) {
                     MITLog_DetPuts(MITLOG_LEVEL_COMMON, "Get self unregister signal");
-                    /** send unregister package */
+                    /* send unregister package */
                     if(pthread_mutex_lock(&conf_mutex) != 0) {
                         MITLog_DetErrPrintf("pthread_mutex_lock() failed");
                     }
@@ -171,7 +171,7 @@ void socket_ev_r_cb(evutil_socket_t fd, short ev_type, void *data)
                     wd_send_action_pg(app_socket_fd, WD_PG_CMD_UNREGISTER, &addr_server);
                 } else if (cmd == WD_PG_CMD_UNREGISTER) {
                     MITLog_DetPuts(MITLOG_LEVEL_COMMON, "Get Server Unregister Feed Back");
-                    /** handle unregister */
+                    /* handle unregister */
                     if (ret_pg->error != WD_PG_ERR_SUCCESS) {
                         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send unregister package failed:%d", ret_pg->error);
                         wd_send_action_pg(fd, WD_PG_CMD_UNREGISTER, &addr_server);
@@ -214,7 +214,7 @@ void *start_libevent_udp_feed(void *arg)
         MITLog_DetErrPrintf("fcntl() failed");
     }
 
-    /**
+    /*
      * To get the app's local port so we bind first
      */
     struct sockaddr_in addr_self;

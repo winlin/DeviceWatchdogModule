@@ -10,9 +10,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/** the app name */
+/* the app name */
 #define MONITOR_APP_NAME               "app1"
-/** app's version number */
+/* app's version number */
 #define VERSION_MONITOR_APP            "v1.0.3"
 
 int main(int argc, const char * argv[])
@@ -32,7 +32,7 @@ int main(int argc, const char * argv[])
     th_conf.feed_period = 3;
     th_conf.monitored_pid = getpid();
 
-    /** save pid info */
+    /* save pid info */
     char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", th_conf.monitored_pid);
     if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
@@ -40,7 +40,7 @@ int main(int argc, const char * argv[])
         ret = -1;
         goto CLOSE_LOG_TAG;
     }
-    /** save verson info */
+    /* save verson info */
     if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_MONITOR_APP) != MIT_RETV_SUCCESS) {
         MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", MONITOR_APP_NAME, F_NAME_COMM_VERSON);
         ret = -1;

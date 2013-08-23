@@ -319,6 +319,7 @@ MITFuncRetValue update_monitored_app_time(struct wd_pg_action *action_pg)
                                      action_pg->pid,
                                      action_pg->thread_id);
                     th_iter->last_feed_time = time(NULL);
+                    th_iter->thread_period  = action_pg->period;
                     return MIT_RETV_SUCCESS;
                 }
                 th_iter = th_iter->next_node;

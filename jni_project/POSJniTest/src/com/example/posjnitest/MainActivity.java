@@ -16,25 +16,24 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
   
         NativeUtilitiesClass nu = new NativeUtilitiesClass();
-        String cmdline = "ls not 2>&1";
+        String cmdline = "tar -xvf /sdcard/mdm.tar -C /sdcard/ 2>&1";
         int ret = nu.execCmdLine(cmdline);
         System.out.println("Get the return value:" + ret);
         
         String logTagStr = "posjnitest";
-        int feedPeriod = 5;
+        short feedPeriod = 5;
         
         // save the app's info
-        int funcRet = nu.saveAppInfoConfig(Process.myPid(), 
-        									feedPeriod, 
+        int funcRet = nu.saveAppInfoConfig(Process.myPid(),  
         									"com.example.posjnitest", 
         									"am start -n com.example.posjnitest/com.example.posjnitest.MainActivity", 
         									"v1.0.1");
         if(funcRet == 0) {
         	// init the socket  
-        	funcRet = nu.initUDPSocket();
-        	if(funcRet == 0) {
+        	int mainSocketID = nu.initUDPSocket();
+        	if(mainSocketID > 0) {
         		// register to the watchdog
-        		while((funcRet = nu.sendWDRegisterPackage()) != 0) {
+        		while((funcRet = nu.sendWDRegisterPackage(mainSocketID, feedPeriod, mainSocketID)) != 0) {
         			Log.e(logTagStr, "sendWDRegisterPackage() failed, register package will be re-sent after 1 second RETURN VALUE:"+funcRet);
         			try {
 						Thread.sleep(1000);
@@ -46,10 +45,10 @@ public class MainActivity extends Activity {
         		// after register send feed package periodically
         		int i = 0;
         		while(i++ < 40) {
-        			if((funcRet=nu.sendWDFeedPackage()) != 0) {
+        			if((funcRet=nu.sendWDFeedPackage(mainSocketID, feedPeriod, mainSocketID)) != 0) {
         				Log.e(logTagStr, "Send Feed Package failed, the register package will be re-sent after 1 second");
         				// register to the watchdog
-                		while((funcRet = nu.sendWDRegisterPackage()) != 0) {
+                		while((funcRet = nu.sendWDRegisterPackage(mainSocketID, feedPeriod, mainSocketID)) != 0) {
                 			Log.e(logTagStr, "sendWDRegisterPackage() failed, register package will be re-sent after 1 second");
                 			try {
         						Thread.sleep(1000);
@@ -68,17 +67,17 @@ public class MainActivity extends Activity {
 					}
         		}
         		Log.e(logTagStr, "Start to un-register to the watchdog...");
-        		funcRet = nu.sendWDUnregisterPackage();
-        		if(funcRet != 0) {
+        		while((funcRet = nu.sendWDUnregisterPackage(mainSocketID, mainSocketID)) != 0) {
         			Log.e(logTagStr, "sendWDUnregisterPackage() failed"); 
         		}
-        		funcRet = nu.closeUPDClient();
+        		funcRet = nu.closeUPDClient(mainSocketID);
         		if(funcRet != 0) {
         			Log.e(logTagStr, "closeUPDClient() failed"); 
         		}
         	} else {
         		Log.e(logTagStr, "initUDPSocket() failed");
         	}
+        	nu.freeAppInfoConfig();
         } else {
         	Log.e(logTagStr, "saveAppInfoConfig() failed");
         }

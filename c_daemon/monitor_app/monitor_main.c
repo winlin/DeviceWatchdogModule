@@ -24,7 +24,7 @@ static void *thread_start(void *arg)
     int thread_socket_id = init_udp_socket();
     if (thread_socket_id <= 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "init_udp_socket() failed");
-        return -1;
+        return NULL;
     }
     // send the register package
     int main_period = 8;
@@ -58,6 +58,7 @@ static void *thread_start(void *arg)
     }
     // close the socket
     close_udp_socket(thread_socket_id);
+    return NULL;
 }
 
 int main(int argc, const char * argv[])

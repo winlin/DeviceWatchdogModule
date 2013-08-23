@@ -1,4 +1,4 @@
-/**
+/*
  *
  *  mit_log_module.h
  *
@@ -26,8 +26,8 @@
 
 #include <string.h>
 #include <errno.h>
-/** debug switch macro */
-/**
+/* debug switch macro */
+/*
  * If define the marco all message will be printed into stdout/stderr.
  * It can be used when you want to debug application.
  *
@@ -72,7 +72,7 @@ typedef enum MITLogMaxSize {
     MITLOG_MAX_ERROR_BUFFER_SIZE     = 0            // 1KB
 }MITLogMaxSize;
 
-/**
+/*
  * This function should be called before use the MITLog module.
  * @param: appName     The name of application;
  *                     If the length bigger than MITLOG_MAX_APP_NAME_LEN,
@@ -82,7 +82,7 @@ typedef enum MITLogMaxSize {
  */
 MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath);
 
-/**
+/*
  * This function log the message into files or stdout/stderr
  *      which depends on the definition of MITLOG_DEBUG_ENABLE flag.
  * @param: level     the log level of message.
@@ -92,7 +92,7 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath);
  */
 MITLogFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...);
 
-/**
+/*
  * These macro defination can be used print more detail info with __func__ and __LINE__
  *
  */
@@ -102,14 +102,14 @@ MITLogFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...);
 #define MITLog_DetLogEnter                        MITLogWrite(MITLOG_LEVEL_COMMON, "%s:%d %s", __func__, __LINE__, "Enter -->");
 #define MITLog_DetLogExit                         MITLogWrite(MITLOG_LEVEL_COMMON, "%s:%d %s", __func__, __LINE__, "<--Exist");
 
-/**
+/*
  * This function will flush all buffer into log files.
  * If doesn't define the MITLOG_DEBUG_ENABLE flag this function will do nothing.
  *
  */
 void MITLogFlush(void);
 
-/**
+/*
  * This function will close all open files and release the memory.
  * If doesn't define the MITLOG_DEBUG_ENABLE flag this function will do nothing.
  *

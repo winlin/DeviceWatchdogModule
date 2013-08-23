@@ -1,8 +1,7 @@
 package com.ipaloma.posjniproject.jni;
 
 /*
- * NativeUtilitiesClass watchdog related function return value please refer MITLogFuncRetValue:
- * typedef enum MITLogFuncRetValue {
+ *   typedef enum MITLogFuncRetValue {
  *   MITLOG_RETV_SUCCESS              = 0,
  *   MITLOG_RETV_FAIL                 = -1,
  *   MITLOG_RETV_PARAM_ERROR          = -100,
@@ -14,13 +13,70 @@ package com.ipaloma.posjniproject.jni;
 
 
 public class NativeUtilitiesClass {
-	// Declare the watchdog related function
-	public native int saveAppInfoConfig(int pid, int feed_period, String appName, String cmdLine, String versionSre);
+	/*
+	 * Save the application's information.
+	 * If you want to change application's information, you must call this
+	 * function and sendWDRegisterPackage() again.
+	 *  
+	 * @param: pid 			the process identifier
+	 * 		   appName		the application's name
+	 * 		   cmdLine		the start command line of application
+	 * 		   versionStr   the version string of the application, for example "v1.0.1"
+	 * @return: please refer enum MITLogFuncRetValue
+	 */
+	public native int saveAppInfoConfig(int pid, String appName, String cmdLine, String versionStr);
+	
+	/*
+	 * Free the application's information.
+	 * This function should be called at the end of the thread. 
+	 */
+	public native void freeAppInfoConfig();
+	
+	/*
+	 * Initialize the feeding socket. Every thread so call this function one time.
+	 * 
+	 * @return: if success the socket identifier will be returned else -1 will be returned.
+	 */
 	public native int initUDPSocket();
-	public native int sendWDRegisterPackage();
-	public native int sendWDFeedPackage();
-	public native int sendWDUnregisterPackage();
-	public native int closeUPDClient();
+	
+	/*
+	 * Close the UDP socket.
+	 * 
+	 * @param: socketID		the socket identifier which you want to close
+	 * @return: please refer enum MITLogFuncRetValue
+	 */
+	public native int closeUPDClient(int socketID);
+	
+	/*
+	 * The monitored application register to the watchdog.
+	 * 
+	 * @param: socketID		the socket identifier which you want to close
+	 * 		   period		the feed period by second
+	 * 		   threadID		the monitored thread identifier, you can use the socketID as threadID
+	 * 						but you should always use the same threadID in one thread
+	 * @return: please refer enum MITLogFuncRetValue
+	 */
+	public native int sendWDRegisterPackage(int socketID, short period, int threadID);
+	
+	/*
+	 * The monitored application feed to the watchdog.
+	 * Every time you can change the period for feeding if you plan to do some heavy work.
+	 * 
+	 * @param: socketID		the socket identifier which you want to close
+	 * 		   period		the feed period by second
+	 * 		   threadID		the monitored thread identifier, it must be same with register threadID
+	 * @return: please refer enum MITLogFuncRetValue
+	 */
+	public native int sendWDFeedPackage(int socketID, short period, int threadID);
+	
+	/*
+	 * The monitored application unregister to the watchdog.
+	 *  
+	 * @param: socketID		the socket identifier which you want to close
+	 * 		   threadID		the monitored thread identifier, it must be same with register threadID
+	 * @return: please refer enum MITLogFuncRetValue
+	 */
+	public native int sendWDUnregisterPackage(int socketID, int threadID);
 	
     // Declare native method (and make it public to expose it directly)
 	// @return On success 0 will be returned else means error.

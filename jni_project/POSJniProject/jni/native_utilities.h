@@ -10,10 +10,18 @@ extern "C" {
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
  * Method:    saveAppInfoConfig
- * Signature: (IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
+ * Signature: (ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;)I
  */
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_saveAppInfoConfig
-  (JNIEnv *, jobject, jint, jint, jstring, jstring, jstring);
+  (JNIEnv *, jobject, jint, jstring, jstring, jstring);
+
+/*
+ * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
+ * Method:    freeAppInfoConfig
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_freeAppInfoConfig
+  (JNIEnv *, jobject);
 
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
@@ -25,35 +33,35 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_i
 
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
+ * Method:    closeUPDClient
+ * Signature: (I)I
+ */
+JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_closeUPDClient
+  (JNIEnv *, jobject, jint);
+
+/*
+ * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
  * Method:    sendWDRegisterPackage
- * Signature: ()I
+ * Signature: (ISI)I
  */
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDRegisterPackage
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint, jshort, jint);
 
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
  * Method:    sendWDFeedPackage
- * Signature: ()I
+ * Signature: (ISI)I
  */
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDFeedPackage
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint, jshort, jint);
 
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
  * Method:    sendWDUnregisterPackage
- * Signature: ()I
+ * Signature: (II)I
  */
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDUnregisterPackage
-  (JNIEnv *, jobject);
-
-/*
- * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass
- * Method:    closeUPDClient
- * Signature: ()I
- */
-JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_closeUPDClient
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint, jint);
 
 /*
  * Class:     com_ipaloma_posjniproject_jni_NativeUtilitiesClass

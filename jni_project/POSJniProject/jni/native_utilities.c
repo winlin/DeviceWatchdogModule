@@ -44,7 +44,7 @@ int pipe_exec_cmd(const char *cmd_line)
 }
 
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_saveAppInfoConfig
-  (JNIEnv *jev, jobject jobj, jint monitorPID, jint monitorPeriod, jstring appName, jstring cmdLine, jstring versionStr)
+  (JNIEnv *jev, jobject jobj, jint monitorPID, jstring appName, jstring cmdLine, jstring versionStr)
 {
 	const char *app_name = (*jev)->GetStringUTFChars(jev, appName, NULL);
 	LOGI("Get app name :%s\n", app_name);
@@ -64,7 +64,7 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_s
 	const char *version_str = (*jev)->GetStringUTFChars(jev, versionStr, NULL);
 	LOGI("Get version str :%s\n", version_str);
 
-	MITFuncRetValue func_ret = save_appinfo_config(monitorPID, monitorPeriod, app_name, cmd_line, version_str);
+	MITFuncRetValue func_ret = save_appinfo_config(monitorPID, app_name, cmd_line, version_str);
 	if(func_ret != MIT_RETV_SUCCESS) {
 		LOGE("save_appinfo_config() failed");
 	}
@@ -76,20 +76,37 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_s
 	return func_ret;
 }
 
+JNIEXPORT void JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_freeAppInfoConfig
+  (JNIEnv *jev, jobject jobj)
+{
+	free_appinfo_config();
+	MITLogClose();
+}
+
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_initUDPSocket
   (JNIEnv *jev, jobject jobj)
 {
-	MITFuncRetValue func_ret = init_udp_socket();
-	if(func_ret != MIT_RETV_SUCCESS) {
+	int socket_id = init_udp_socket();
+	if(socket_id <= 0) {
 		LOGE("init_udp_socket() failed");
+	}
+	return socket_id;
+}
+
+JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_closeUPDClient
+  (JNIEnv *jev, jobject jobj, jint socketID)
+{
+	MITFuncRetValue func_ret = close_udp_socket(socketID);
+	if(func_ret != MIT_RETV_SUCCESS) {
+		LOGE("close_udp_socket() failed");
 	}
 	return func_ret;
 }
 
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDRegisterPackage
-  (JNIEnv *jev, jobject jobj)
+  (JNIEnv *jev, jobject jobj, jint socketID, jshort period, jint threadID)
 {
-	MITFuncRetValue func_ret = send_wd_register_package();
+	MITFuncRetValue func_ret = send_wd_register_package(socketID, period, threadID);
 	if(func_ret != MIT_RETV_SUCCESS) {
 		LOGE("send_wd_register_package() failed");
 	}
@@ -97,9 +114,9 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_s
 }
 
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDFeedPackage
-  (JNIEnv *jev, jobject jobj)
+  (JNIEnv *jev, jobject jobj, jint socketID, jshort period, jint threadID)
 {
-	MITFuncRetValue func_ret = send_wd_feed_package();
+	MITFuncRetValue func_ret = send_wd_feed_package(socketID, period, threadID);
 	if(func_ret != MIT_RETV_SUCCESS) {
 		LOGE("send_wd_feed_package() failed");
 	}
@@ -107,25 +124,12 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_s
 }
 
 JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_sendWDUnregisterPackage
-  (JNIEnv *jev, jobject jobj)
+  (JNIEnv *jev, jobject jobj, jint socketID, jint threadID)
 {
-	MITFuncRetValue func_ret = send_wd_unregister_package();
+	MITFuncRetValue func_ret = send_wd_unregister_package(socketID,threadID);
 	if(func_ret != MIT_RETV_SUCCESS) {
 		LOGE("send_wd_unregister_package() failed");
 	}
-	return func_ret;
-}
-
-JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_closeUPDClient
-  (JNIEnv *jev, jobject jobj)
-{
-	MITFuncRetValue func_ret = close_udp_socket();
-	if(func_ret != MIT_RETV_SUCCESS) {
-		LOGE("close_udp_socket() failed");
-	}
-	// close the log moudle
-	MITLogClose();
-
 	return func_ret;
 }
 

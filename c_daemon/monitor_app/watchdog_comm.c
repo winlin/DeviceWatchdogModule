@@ -163,12 +163,24 @@ MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
     }
 
     gl_feed_configure.monitored_pid = monitored_pid;
-    gl_feed_configure.app_name      = strdup(app_name);
+    /*
+     * if pointed to string, free first,
+     * because this function maybe called many times
+     */
+    if(gl_feed_configure.app_name) {
+        free(gl_feed_configure.app_name);
+        gl_feed_configure.app_name = NULL;
+    }
+    gl_feed_configure.app_name = strdup(app_name);
     if(gl_feed_configure.app_name == NULL) {
         MITLog_DetErrPrintf("strdup() failed");
         return MIT_RETV_ALLOC_MEM_FAIL;
     }
-    gl_feed_configure.cmd_line      = strdup(cmd_line);
+    if(gl_feed_configure.cmd_line) {
+        free(gl_feed_configure.cmd_line);
+        gl_feed_configure.cmd_line = NULL;
+    }
+    gl_feed_configure.cmd_line = strdup(cmd_line);
     if(gl_feed_configure.cmd_line == NULL) {
         free(gl_feed_configure.app_name);
         gl_feed_configure.app_name  = NULL;

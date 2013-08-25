@@ -41,7 +41,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <pthread.h>
 
 static int mit_log_opened_flag;
 
@@ -53,15 +52,9 @@ static char const *MITLogFileSuffix[]  = {".comm", ".warn", ".err"};
 static int MITLogFileMaxNum[] = {MITLOG_MAX_COMM_FILE_NUM, MITLOG_MAX_WARN_FILE_NUM,\
 				 MITLOG_MAX_ERROR_FILE_NUM};
 
-static long long MITLogBufferMaxSize[] = {MITLOG_MAX_COMM_BUFFER_SIZE,\
-				 MITLOG_MAX_WARN_BUFFER_SIZE, MITLOG_MAX_ERROR_BUFFER_SIZE};
-
 static char applicationName[MITLOG_MAX_APP_NAME_LEN];
 static char appLogFilePath[MITLOG_MAX_FILE_NAME_PATH_LEN];
 static char *logFilePaths[MITLOG_FILE_INDEX_NUM];
-static char *logFileBuffer[MITLOG_FILE_INDEX_NUM];
-
-static pthread_rwlock_t bufferRWlock;     // use for the logFileBuffer
 
 #endif
 static FILE *originFilePointers[MITLOG_FILE_INDEX_NUM];
@@ -249,8 +242,14 @@ static inline MITLogFileIndex MITGetIndexForLevel(MITLogLevel level)
 }
 
 /************************** MITLog Module Function ********************************/
-MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
+MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath, int bufferMode)
 {
+    MIT_dputs("Enter -->");
+    if(bufferMode != _IONBF &&
+       bufferMode != _IOLBF &&
+       bufferMode != _IOFBF) {
+        return MITLOG_RETV_PARAM_ERROR;
+    }
     /* this use to avoid double times to open log module */
     if (mit_log_opened_flag == 1) {
         return MITLOG_RETV_HAS_OPENED;
@@ -277,38 +276,20 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
     if (logPath[pathLen-1] != '/') {
         appLogFilePath[pathLen] = '/';
     }
-    // init the read/write lock
-    int ret = pthread_rwlock_init(&bufferRWlock, NULL);
-    if (ret != 0) {
-        MIT_derrprintf("pthread_rwlock_init() failed:%d", ret);
-        return MITLOG_RETV_FAIL;
-    }
-    // keep the log path exist
-    ret = mkdir(appLogFilePath, S_IRWXU|S_IRWXG|S_IRWXO);
+
+    // make sure the log path exist
+    int ret = mkdir(appLogFilePath, S_IRWXU|S_IRWXG|S_IRWXO);
     if (ret == -1 && errno != EEXIST) {
         MIT_derrprintf("mkdir() failed:%d", ret);
         return MITLOG_RETV_FAIL;
     }
-    // alloc memory
+        // alloc memory
     for (int i = MITLOG_INDEX_COMM_FILE; i<= MITLOG_INDEX_ERROR_FILE; ++i) {
         logFilePaths[i] = (char *)calloc(MITLOG_MAX_FILE_NAME_PATH_LEN, sizeof(char));
         if (!logFilePaths[i]) {
             for (int j=MITLOG_INDEX_COMM_FILE; j<i; ++j) {
                 free(logFilePaths[j]);
                 logFilePaths[j] = NULL;
-            }
-            MIT_derrprintf("Allocate memroy Faild");
-            return MITLOG_RETV_ALLOC_MEM_FAIL;
-        }
-        logFileBuffer[i] = (char *)calloc(MITLogBufferMaxSize[i], sizeof(char));
-        if (!logFileBuffer[i]) {
-            for (int j=MITLOG_INDEX_COMM_FILE; j<MITLOG_INDEX_ERROR_FILE; ++j) {
-                free(logFilePaths[j]);
-                logFilePaths[j] = NULL;
-            }
-            for (int j=MITLOG_INDEX_COMM_FILE; j<i; ++j) {
-                free(logFileBuffer[j]);
-                logFileBuffer[j] = NULL;
             }
             MIT_derrprintf("Allocate memroy Faild");
             return MITLOG_RETV_ALLOC_MEM_FAIL;
@@ -322,8 +303,6 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
             for (int j=MITLOG_INDEX_COMM_FILE; j<=MITLOG_INDEX_ERROR_FILE; ++j) {
                 free(logFilePaths[j]);
                 logFilePaths[j] = NULL;
-                free(logFileBuffer[j]);
-                logFileBuffer[j] = NULL;
             }
             for (int j=MITLOG_INDEX_COMM_FILE; j<i; ++j) {
                 fclose(originFilePointers[j]);
@@ -331,6 +310,12 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath)
             }
             MIT_derrprintf("Open %s Faild", logFilePaths[i]);
             return MITLOG_RETV_OPEN_FILE_FAIL;
+        }
+        // set the buffer mode
+        if(i != MITLOG_INDEX_ERROR_FILE) {
+            if(setvbuf(originFilePointers[i], (char *)NULL, bufferMode, 0) != 0) {
+                MIT_derrprintf("setvbuf(%d) failed. The log files will use default buffer mode", i);
+            }
         }
     }
 
@@ -391,37 +376,7 @@ MITLogFuncRetValue MITLogWrite(MITLogLevel level, const char *fmt, ...)
 #if MITLOG_DEBUG_ENABLE
     fprintf(originFilePointers[aryIndex], "%-10s %s", MITLogLevelHeads[aryIndex], tarMessage);
 #else
-    // 3. add target message into buffer or file
-    pthread_rwlock_wrlock(&bufferRWlock);
-    long long bufferUesedSize = strlen(logFileBuffer[aryIndex]);
-    if (MITLogBufferMaxSize[aryIndex] - bufferUesedSize > sumLen) {
-        // write into buffer
-        strcat(logFileBuffer[aryIndex], tarMessage);
-        pthread_rwlock_unlock(&bufferRWlock);
-    } else {
-        MIT_dputs("String write into file*****************");
-        pthread_rwlock_unlock(&bufferRWlock);
-
-        pthread_rwlock_rdlock(&bufferRWlock);
-        // 1. write the buffer into file
-        long long firstLen = strlen(logFileBuffer[aryIndex]);
-        MITLogWriteFile(aryIndex, logFileBuffer[aryIndex], firstLen);
-        pthread_rwlock_unlock(&bufferRWlock);
-
-        pthread_rwlock_wrlock(&bufferRWlock);
-        // empty the buffer
-        memset(logFileBuffer[aryIndex], 0, MITLogBufferMaxSize[aryIndex]);
-        // 2. write into origin file or buffer
-        if (sumLen < MITLogBufferMaxSize[aryIndex]) {
-            // write into buffer
-            strcat(logFileBuffer[aryIndex], tarMessage);
-            pthread_rwlock_unlock(&bufferRWlock);
-        } else {
-            pthread_rwlock_unlock(&bufferRWlock);
-            // write into origin file directly
-            MITLogWriteFile(aryIndex, tarMessage, sumLen);
-        }
-    }
+    MITLogWriteFile(aryIndex, tarMessage, sumLen);
 
     free(tarMessage);
     tarMessage = NULL;
@@ -433,7 +388,6 @@ void MITLogFlush(void)
 {
 #ifndef MITLOG_DEBUG_ENABLE
     for (int i=MITLOG_INDEX_COMM_FILE; i<=MITLOG_INDEX_ERROR_FILE; ++i) {
-        MITLogWriteFile(i, logFileBuffer[i], strlen(logFileBuffer[i]));
         fflush(originFilePointers[i]);
     }
 #endif
@@ -454,13 +408,6 @@ void MITLogClose(void)
 
         free(logFilePaths[j]);
         logFilePaths[j] = NULL;
-        free(logFileBuffer[j]);
-        logFileBuffer[j] = NULL;
-    }
-    // 3. destroy the rwlock
-    int ret = pthread_rwlock_destroy(&bufferRWlock);
-    if (ret != 0) {
-        MIT_dprintf("pthread_rwlock_destroy() failed:%d", ret);
     }
 #endif
 }

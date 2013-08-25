@@ -52,7 +52,7 @@ JNIEXPORT jint JNICALL Java_com_ipaloma_posjniproject_jni_NativeUtilitiesClass_s
 	char log_path[MAX_AB_PATH_LEN] = {0};
 	sprintf(log_path, "%s%s", LOG_FILE_PATH, app_name);
 	LOGI("The %s log path:%s", app_name, log_path);
-	MITLogFuncRetValue log_ret = MITLogOpen(app_name, log_path);
+	MITLogFuncRetValue log_ret = MITLogOpen(app_name, log_path, _IOLBF);
 	if (log_ret != MITLOG_RETV_SUCCESS) {
 		LOGE("MITLogOpen() failed");
 		(*jev)->ReleaseStringUTFChars(jev, appName, app_name);

@@ -22,9 +22,9 @@ int main(int argc, const char * argv[])
     int ret = 0;
     ret = daemon(1, 1);
     if(ret == -1) {
-	perror("call daemon() failed!");
+        perror("call daemon() failed!");
     }
-    MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD);
+    MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD, _IOLBF);
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
 

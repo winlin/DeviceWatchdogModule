@@ -23,7 +23,7 @@ int main(int argc, const char * argv[])
 //	if(ret == -1) {
 //		perror("call daemon() failed!");
 //	}
-    MITLogOpen("UpdateAppsDaemon", LOG_FILE_PATH "up_apps_daemon");
+    MITLogOpen("UpdateAppsDaemon", LOG_FILE_PATH "up_apps_daemon", _IOLBF);
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
 

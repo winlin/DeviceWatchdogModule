@@ -9,7 +9,7 @@
  *  Usage:
  *      #include "include/mit_log_module.h"
  *       int main() {
- *        MITLogOpen("TestApp");
+ *        MITLogOpen("TestApp", "/sdcard/logs", _IOLBF);
  *         //...
  *         MITLogWrite(MITLOG_LEVEL_COMMON, "This is for common:%d Message:%s", 12, "Hello world");
  *         MITLogWrite(MITLOG_LEVEL_WARNING, "This is for warning:%d Message:%s", 12, "Hello world");
@@ -67,20 +67,22 @@ typedef enum MITLogMaxSize {
     MITLOG_MAX_COMM_FILE_NUM         = 10,             // common type file num: appName.comm.1
     MITLOG_MAX_WARN_FILE_NUM         = 5,            // warning type file num: appName.warn.1 -- appName.warn.10
     MITLOG_MAX_ERROR_FILE_NUM        = 5,            // error type file num: appName.error.1 -- appName.error.10
-    MITLOG_MAX_COMM_BUFFER_SIZE      = 0,           // 4KB
-    MITLOG_MAX_WARN_BUFFER_SIZE      = 0,           // 1KB
-    MITLOG_MAX_ERROR_BUFFER_SIZE     = 0            // 1KB
 }MITLogMaxSize;
 
 /*
  * This function should be called before use the MITLog module.
  * @param: appName     The name of application;
  *                     If the length bigger than MITLOG_MAX_APP_NAME_LEN,
- *                     the name will be truncated.
+ *                     the name will be truncated;
+ *         logPath     Where to store the log files;
+ *         bufferMode  The buffer mode of the every level log file except ERROR level;
+ *                     The ERROR level use _IONBF.
+ *                     For other levels you can use _IONBF/_IOLBF/_IOFBF,
+ *                     _IOLBF is recommanded.
  * @returns: enum MITLogFuncRetValue
  *
  */
-MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath);
+MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath, int bufferMode);
 
 /*
  * This function log the message into files or stdout/stderr

@@ -63,7 +63,7 @@ static void *thread_start(void *arg)
 
 int main(int argc, const char * argv[])
 {
-    MITLogOpen("UDPClient", LOG_FILE_PATH MONITOR_APP_NAME);
+    MITLogOpen("UDPClient", LOG_FILE_PATH MONITOR_APP_NAME, _IOLBF);
     int ret = 0;
     char dir[1024];
     char *cwd_char = getcwd(dir, sizeof(dir));

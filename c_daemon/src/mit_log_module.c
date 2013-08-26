@@ -316,6 +316,10 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath, int buffe
             if(setvbuf(originFilePointers[i], (char *)NULL, bufferMode, 0) != 0) {
                 MIT_derrprintf("setvbuf(%d) failed. The log files will use default buffer mode", i);
             }
+        } else {
+            if(setvbuf(originFilePointers[i], (char *)NULL, _IONBF, 0) != 0) {
+                MIT_derrprintf("setvbuf(%d) failed. The log files will use default buffer mode", i);
+            }
         }
     }
 

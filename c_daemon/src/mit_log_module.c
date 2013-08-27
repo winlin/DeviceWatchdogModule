@@ -283,7 +283,7 @@ MITLogFuncRetValue MITLogOpen(const char *appName, const char*logPath, int buffe
         MIT_derrprintf("mkdir() failed:%d", ret);
         return MITLOG_RETV_FAIL;
     }
-        // alloc memory
+    // alloc memory
     for (int i = MITLOG_INDEX_COMM_FILE; i<= MITLOG_INDEX_ERROR_FILE; ++i) {
         logFilePaths[i] = (char *)calloc(MITLOG_MAX_FILE_NAME_PATH_LEN, sizeof(char));
         if (!logFilePaths[i]) {

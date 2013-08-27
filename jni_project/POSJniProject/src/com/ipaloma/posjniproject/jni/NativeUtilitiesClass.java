@@ -23,12 +23,18 @@ public class NativeUtilitiesClass {
 	 * 		   cmdLine		the start command line of application
 	 * 		   versionStr   the version string of the application, for example "v1.0.1"
 	 * @return: please refer enum MITLogFuncRetValue
+	 * WARNING: you should only call this function in main thread
+	 *			before other thread started.
+	 *          Remember to call free_appinfo_config() at the end
+	 *          of the main thread.
 	 */
 	public native int saveAppInfoConfig(int pid, String appName, String cmdLine, String versionStr);
 	
 	/*
 	 * Free the application's information.
 	 * This function should be called at the end of the thread. 
+	 * WARNING: you should only call this function in main thread
+	 *          after other thread ended.
 	 */
 	public native void freeAppInfoConfig();
 	

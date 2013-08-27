@@ -8,7 +8,10 @@
 /*
  * Recieve App's infomation used for feeding watchdog
  * and save pid and version into config files.
- *
+ * WARNING: you should only call this function in main thread
+ *          before other thread started.
+ *          Remember to call free_appinfo_config() at the end
+ *          of the main thread.
  */
  MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
                                      const char *app_name,
@@ -17,6 +20,8 @@
 
 /*
  * Free the app's configure info
+ * WARNING: you should only call this function in main thread
+ *          after other thread ended.
  */
 void free_appinfo_config(void);
 

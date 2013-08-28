@@ -20,10 +20,12 @@ int main(int argc, const char * argv[])
      * don't redirect stdin/stdou/stderr
      */
     int ret = 0;
+#ifndef MITLOG_DEBUG_ENABLE
     ret = daemon(1, 1);
     if(ret == -1) {
         perror("call daemon() failed!");
     }
+#endif
     MITLogOpen("DeviceWatchdog", LOG_PATH_WATCHD, _IOLBF);
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());

@@ -21,7 +21,6 @@
  * Unit is second.
  */
 #define UP_APP_DAEMON_TIME_INTERVAL         3
-#define APP_BACKUP_SUFFIX                   ".BAK"
 
 /************ Update App Daemon Struct Definition ***************/
 typedef enum  UPAppType{
@@ -37,32 +36,28 @@ typedef enum  UPAppType{
 struct up_app_info {
     /* the updated app's type */
     UPAppType app_type;
-    /* the updated app's name */
-    char * app_name;
     /*
-     * the installed app's absolutely path without file name
-     * ended with '/'
+     * the updated app's name.
+     * for C app, it MUST be same with watchdog register app name;
+     * for JAVA app, it MUST be standar name: com.ipaloma.posjniproject.
      */
-    char * app_path;
+    char *app_name;
     /* the path points to NEW app inclucde file name */
-    char * new_app_path;
+    char *new_app_path;
     /* the NEW app's verson */
-    char * new_version;
-};
+    char *new_version;
 
-struct up_app_info_node {
-    struct up_app_info_node *next_node;
-    struct up_app_info app_info;
+    struct up_app_info *next_node;
 };
 
 /*
  * Start the app update function.
  */
-MITFuncRetValue start_app_update_func(struct up_app_info_node **head);
+MITFuncRetValue start_app_update_func(struct up_app_info **head);
 
 /*
  * Free the update app info node's list memory.
  */
-void free_up_app_list(struct up_app_info_node *head);
+void free_up_app_list(struct up_app_info *head);
 
 #endif

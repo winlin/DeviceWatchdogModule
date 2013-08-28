@@ -10,6 +10,7 @@
 
 #include <string.h>
 #include <sys/types.h>
+#include <signal.h>
 
 /* The max absolutely path length. */
 #define MAX_AB_PATH_LEN                      1024
@@ -65,7 +66,8 @@
 #define F_NAME_COMM_CONF               "configure.cfg"
 /* The default file name of app's update lock file */
 #define F_NAME_COMM_UPLOCK             "update.lock"
-
+/* The default file suffix of app's backup */
+#define APP_BACKUP_SUFFIX                   ".BAK"
 /*
  * The app's log and configure path names
  * must be same with the app's name.
@@ -269,7 +271,8 @@ struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len);
 size_t strip_string_space(char **tar_str);
 
 /*
- * Compare cmd_name is equal in two cmd_lines
+ * Compare cmd_name is equal in two cmd_lines.
+ *
  * @param f_cmdline: first cmd_line string
  * @param s_cmdline: second cmd_line string
  * @return  On equal 0 will be returned
@@ -280,6 +283,7 @@ int compare_two_cmd_line(const char *f_cmdline, const char *s_cmdline);
 /*
  * Write content into file_path.
  * The file_path file will be open with "w" flag.
+ *
  * @param file_path: the absolute file path, ex: /tmp/watchdog/watchdog.conf
  * @param content:   the content will be written into file
  * @param cont_len   the lenght of content
@@ -294,20 +298,22 @@ MITFuncRetValue write_file(const char *file_path, const char *content, size_t co
 long long int get_pid_with_comm(const char *comm);
 
 /*
- * Compare two string from end to start, if one is another one's substring
- * 0 will be returned else -1 will be returned.
+ * Compare two string from end to start, if one is another one's substring.
+ *
+ * @return 0 will be returned else -1 will be returned.
  */
 int reverse_compare_string(const char *str_one, const char *str_two);
 
 /*
  * Get application's comm whoes pid is "pid".
+ *
  * @return On success the comm of the pid will be set into app_comm.
  */
 void get_comm_with_pid(long long int pid, char* app_comm);
 
 /*
  * Save app's configure info into APP_CONF_PATH
- * The file will be open by flag "w"
+ * The file will be open by flag "w".
  */
 MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, const char *content);
 
@@ -319,14 +325,52 @@ void get_app_version(const char *app_name, char *ver_str);
 /*
  * Check whethe app's update lock file exist.
  * The path is APP_CONF_PATH/app_name/update.lock.
+ *
  * @return if exist return 0 else return -1
  */
 int check_update_lock_file(const char *app_name);
 
 /*
+ * Create the update lock file for the special application
+ * in the path of APP_CONF_PATH/app_name.
+ *
+ * @return 0 on success else -1 will be returned.
+ */
+int create_update_lock_file(const char *app_name);
+
+/*
+ * Remove the update lock file
+ *
+ * @return 0 on success else -1 will be returned.
+ */
+int remove_update_lock_file(const char *app_name);
+
+/*
+ * Replace the application with an other version
+ *
+ * @return 0 on success else -1 will be returned.
+ */
+int replace_the_application(const char *app_name, const char *new_app_path);
+
+/*
+ * Backup the application
+ *
+ * @return 0 on success else -1 will be returned.
+ */
+int backup_application(const char *app_name);
+
+/*
+ * Call system() function to exec a shell cmd
+ *
+ * @return the return value of system() call
+ *         0 on success else will be <0
+ */
+int posix_system(const char *cmd_line);
+
+/*
  * Start a new process to execute cmd line.
  */
-MITFuncRetValue start_app_with_cmd_line(const char * cmd_line);
+pid_t start_app_with_cmd_line(const char * cmd_line);
 
 #endif
 

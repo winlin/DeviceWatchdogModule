@@ -19,10 +19,12 @@ int main(int argc, const char * argv[])
      *    don't redirect stdin/stdou/stderr
      */
     int ret = 0;
-//	ret = daemon(1, 1);
-//	if(ret == -1) {
-//		perror("call daemon() failed!");
-//	}
+#ifndef MITLOG_DEBUG_ENABLE
+	ret = daemon(1, 1);
+	if(ret == -1) {
+		perror("call daemon() failed!");
+	}
+#endif
     MITLogOpen("UpdateAppsDaemon", LOG_FILE_PATH "up_apps_daemon", _IOLBF);
 
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "daemon ppid:%d pid:%d",  getppid(), getpid());
@@ -48,7 +50,7 @@ int main(int argc, const char * argv[])
         ret = -1;
         goto CLOSE_LOG_TAG;
     }
-    struct up_app_info_node *head = NULL;
+    struct up_app_info *head = NULL;
 
     start_app_update_func(&head);
 

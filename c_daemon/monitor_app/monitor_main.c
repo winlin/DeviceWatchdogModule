@@ -13,10 +13,11 @@
 #include <pthread.h>
 
 /* the app name */
-#define MONITOR_APP_NAME               "app4"
+#define MONITOR_APP_NAME               "app1"
 /* app's version number */
-#define VERSION_MONITOR_APP            "v1.0.3"
+#define VERSION_MONITOR_APP            "v1.0.6"
 
+#define FEED_TIMES  100000000
 
 static void *thread_start(void *arg)
 {
@@ -38,7 +39,7 @@ static void *thread_start(void *arg)
 
     // periodically send the feed package
     int i = 0;
-    while(i++ < 10) {
+    while(i++ < FEED_TIMES) {
         if((func_ret=send_wd_feed_package(thread_socket_id, main_period, thread_socket_id)) != MIT_RETV_SUCCESS) {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_wd_feed_package() failed");
             if(func_ret == MIT_RETV_TIMEOUT) {
@@ -102,7 +103,7 @@ int main(int argc, const char * argv[])
 
     // periodically send the feed package
     int i = 0;
-    while(i++ < 10) {
+    while(i++ < FEED_TIMES) {
         if((func_ret=send_wd_feed_package(main_socket_id, main_period, main_socket_id)) != MIT_RETV_SUCCESS) {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "send_wd_feed_package() failed");
             if(func_ret == MIT_RETV_TIMEOUT) {

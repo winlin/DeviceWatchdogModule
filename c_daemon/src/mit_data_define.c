@@ -589,6 +589,83 @@ int check_update_lock_file(const char *app_name)
     return exist_flag;
 }
 
+int create_update_lock_file(const char *app_name)
+{
+    char path_one[MAX_AB_PATH_LEN]  = {0};
+    char cmd_str[MAX_AB_PATH_LEN*3] = {0};
+    /* create the update lock file */
+    snprintf(path_one, MAX_AB_PATH_LEN, "%s%s/%s", APP_CONF_PATH, app_name, F_NAME_COMM_UPLOCK);
+    snprintf(cmd_str, MAX_AB_PATH_LEN*3, "touch %s", path_one);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "create update lock file cmd:%s", cmd_str);
+
+    if (posix_system(cmd_str) == -1) {
+        MITLog_DetErrPrintf("system():%s failed", cmd_str);
+        return -1;
+    }
+    return 0;
+}
+
+int remove_update_lock_file(const char *app_name)
+{
+    char path_one[MAX_AB_PATH_LEN]  = {0};
+    char cmd_str[MAX_AB_PATH_LEN*3] = {0};
+    snprintf(path_one, MAX_AB_PATH_LEN, "%s%s/%s", APP_CONF_PATH, app_name, F_NAME_COMM_UPLOCK);
+    snprintf(cmd_str ,MAX_AB_PATH_LEN*3, "rm -f %s", path_one);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "remove update lock file cmd:%s", cmd_str);
+
+    if (posix_system(cmd_str) == -1) {
+        MITLog_DetErrPrintf("system():%s failed", cmd_str);
+        return -1;
+    }
+    return 0;
+}
+
+int backup_application(const char *app_name)
+{
+    char path_one[MAX_AB_PATH_LEN]      = {0};
+    char path_two[MAX_AB_PATH_LEN]      = {0};
+    char cmd_str[MAX_AB_PATH_LEN*3]     = {0};
+    snprintf(path_one, MAX_AB_PATH_LEN, "%s%s", APP_EXEC_FILE_PATH, app_name);
+    snprintf(path_two, MAX_AB_PATH_LEN, "%s%s", path_one, APP_BACKUP_SUFFIX);
+    snprintf(cmd_str, MAX_AB_PATH_LEN*3, "cp -f %s %s", path_one, path_two);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "backup the app cmd_str:%s", cmd_str);
+
+    if (posix_system(cmd_str) == -1) {
+        MITLog_DetErrPrintf("system():%s failed", cmd_str);
+        return -1;
+    }
+    return 0;
+}
+
+int replace_the_application(const char *app_name, const char *new_app_path)
+{
+    char cmd_str[MAX_AB_PATH_LEN*3] = {0};
+    memset(cmd_str, 0, MAX_AB_PATH_LEN);
+    snprintf(cmd_str, MAX_AB_PATH_LEN*3, "cp -f %s %s%s", new_app_path, APP_EXEC_FILE_PATH, app_name);
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "replace the app cmd_str:%s", cmd_str);
+
+    if (posix_system(cmd_str) == -1) {
+        MITLog_DetErrPrintf("system():%s failed", cmd_str);
+        return -1;
+    }
+    return 0;
+}
+
+typedef void (*sighandler_t)(int);
+int posix_system(const char *cmd_line)
+{
+	int ret = 0;
+	sighandler_t old_handler;
+	old_handler = signal(SIGCHLD, SIG_DFL);
+	ret = system(cmd_line);
+	signal(SIGCHLD, old_handler);
+
+	if(ret != 0) {
+		MITLog_DetErrPrintf("call system(%s) faild:%s", cmd_line);
+	}
+	return ret;
+}
+
 pid_t start_app_with_cmd_line(const char * cmd_line)
 {
     char *exec_line = strdup(cmd_line);

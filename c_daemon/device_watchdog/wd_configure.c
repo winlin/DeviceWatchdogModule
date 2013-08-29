@@ -54,9 +54,8 @@ struct wd_configure* get_wd_configure(void)
         if (errno == ENOENT) {
             /* no such file or directory */
             /* keep the path exist */
-            int ret = mkdir(CONF_PATH_WATCHD, S_IRWXU|S_IRWXG|S_IRWXO);
-            if (ret == -1 && errno != EEXIST) {
-                MITLog_DetErrPrintf("mkdir() failed");
+            if(create_directory(CONF_PATH_WATCHD) != 0) {
+                MITLog_DetErrPrintf("create_directory(%s) failed", CONF_PATH_WATCHD);
                 goto FREE_CONFIGURE_TAG;
             }
             /* write info into configure file */
@@ -65,7 +64,7 @@ struct wd_configure* get_wd_configure(void)
                 MITLog_DetErrPrintf("fopen() %s failed", CONF_PATH_WATCHD F_NAME_COMM_CONF);
                 goto FREE_CONFIGURE_TAG;
             }
-            ret = fprintf(conf_fp, "%s = %lu\n%s = %lu\n",
+            int ret = fprintf(conf_fp, "%s = %lu\n%s = %lu\n",
                     CONF_KNAME_MISSED_TIMES, wd_conf->max_missed_feed_times,
                     CONF_KNAME_FEED_PERIOD, wd_conf->default_feed_period);
             if (ret < 0) {

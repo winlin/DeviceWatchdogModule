@@ -32,17 +32,9 @@ int main(int argc, const char * argv[])
     th_conf.feed_period = 3;
     th_conf.monitored_pid = getpid();
 
-    /* save pid info */
-    char tmp_str[16] = {0};
-    sprintf(tmp_str, "%d", th_conf.monitored_pid);
-    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", MONITOR_APP_NAME, F_NAME_COMM_PID);
-        ret = -1;
-        goto CLOSE_LOG_TAG;
-    }
-    /* save verson info */
-    if(save_app_conf_info(MONITOR_APP_NAME, F_NAME_COMM_VERSON, VERSION_MONITOR_APP) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", MONITOR_APP_NAME, F_NAME_COMM_VERSON);
+    /* save pid and version info */
+    if(save_app_pid_ver_info(MONITOR_APP_NAME, th_conf.monitored_pid, VERSION_MONITOR_APP) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_pid_ver_info() %s failed", MONITOR_APP_NAME);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }

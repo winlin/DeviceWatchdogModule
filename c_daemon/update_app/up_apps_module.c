@@ -21,6 +21,7 @@
 
 static struct up_app_info *app_list_head;
 static struct event_base *ev_base;
+static int    restart_flag;
 
 MITFuncRetValue update_java_app(struct up_app_info *app_info)
 {
@@ -30,8 +31,6 @@ MITFuncRetValue update_java_app(struct up_app_info *app_info)
     get_app_version(app_info->app_name, ver_str);
     if (strlen(ver_str) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
-        f_ret = MIT_RETV_FAIL;
-        goto FUNC_RET_TAG;
     }
 
     //TODO: compare the verson info to decside whethe to update the app
@@ -46,15 +45,13 @@ MITFuncRetValue update_java_app(struct up_app_info *app_info)
     int japp_name_len = strlen(app_info->app_name) + strlen(JAVA_APP_SUFFIX) + 1;
     char *japp_name   = calloc(japp_name_len, sizeof(char));
     if(japp_name == NULL) {
-        MITLog_DetErrPrintf("callloc() japp_name failed");
+        MITLog_DetErrPrintf("calloc() japp_name failed");
         f_ret = MIT_RETV_FAIL;
         goto REMOVE_LOCK_FILE_TAG;
     }
     snprintf(japp_name, japp_name_len, "%s%s", app_info->app_name, JAVA_APP_SUFFIX);
     if(backup_application(japp_name) != 0) {
         MITLog_DetErrPrintf("backup_application(%s) failed", japp_name);
-        f_ret = MIT_RETV_FAIL;
-        goto REMOVE_LOCK_FILE_TAG;
     }
     /* replace the app */
     if(replace_the_application(japp_name, app_info->new_app_path) != 0) {
@@ -94,14 +91,12 @@ FUNC_RET_TAG:
 
 MITFuncRetValue update_kmodule_app(struct up_app_info *app_info)
 {
-    MITFuncRetValue f_ret = MIT_RETV_SUCCESS;
+MITFuncRetValue f_ret = MIT_RETV_SUCCESS;
     /* check the verson number */
     char ver_str[30] = {0};
     get_app_version(app_info->app_name, ver_str);
     if (strlen(ver_str) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
-        f_ret = MIT_RETV_FAIL;
-        goto FUNC_RET_TAG;
     }
 
     //TODO: compare the verson info to decside whethe to update the app
@@ -112,24 +107,49 @@ MITFuncRetValue update_kmodule_app(struct up_app_info *app_info)
         f_ret = MIT_RETV_FAIL;
         goto FUNC_RET_TAG;
     }
-    /* backup the app */
-    if(backup_application(app_info->app_name) != 0) {
-        MITLog_DetErrPrintf("backup_application(%s) failed", app_info->app_name);
+    /* backup the kernel module */
+    int kmod_name_len = strlen(app_info->app_name) + strlen(KMODULE_LIB_SUFFIX) + 1;
+    char *kmod_name   = calloc(kmod_name_len, sizeof(char));
+    if(kmod_name == NULL) {
+        MITLog_DetErrPrintf("calloc() kmod_name failed");
         f_ret = MIT_RETV_FAIL;
         goto REMOVE_LOCK_FILE_TAG;
     }
-    /* kill the app */
-    long long int pid = get_pid_with_comm(app_info->app_name);
-    if (pid > 0 && kill((pid_t)pid, SIGKILL) < 0) {
-        MITLog_DetErrPrintf("kill() pid=%lld failed", pid);
+    snprintf(kmod_name, kmod_name_len, "%s%s", app_info->app_name, KMODULE_LIB_SUFFIX);
+    if(backup_application(kmod_name) != 0) {
+        MITLog_DetErrPrintf("backup_application(%s) failed", kmod_name);
+    }
+    /* replace the old kernel module */
+    if(replace_the_application(kmod_name, app_info->new_app_path) != 0) {
+        MITLog_DetErrPrintf("replace_the_application():%s failed", kmod_name);
         f_ret = MIT_RETV_FAIL;
         goto REMOVE_LOCK_FILE_TAG;
     }
-    /* replace the app */
-    if(replace_the_application(app_info->app_name, app_info->new_app_path) != 0) {
-        MITLog_DetErrPrintf("replace_the_application():%s failed", app_info->app_name);
+    free(kmod_name);
+
+    /* remount the /system */
+    if(posix_system("mount -o rw,remount /system") != 0) {
+        MITLog_DetErrPrintf("remount /system rw failed");
         f_ret = MIT_RETV_FAIL;
         goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* copy the new version kernel module into special path */
+    char cp_cmd[MAX_AB_PATH_LEN*2] = {0};
+    snprintf(cp_cmd, MAX_AB_PATH_LEN*2, "cp -f %s /system/lib/modules/", app_info->new_app_path);
+    if(posix_system(cp_cmd) != 0) {
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* remount the /system back*/
+    if(posix_system("mount -o ro,remount /system") != 0) {
+        MITLog_DetErrPrintf("remount /system rw failed");
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+
+    /* save the new version of kernel module */
+    if(save_app_pid_ver_info(app_info->app_name, 0, app_info->new_version) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_pid_ver_info(%s) failed", app_info->app_name);
     }
 
     //TODO: start the new verson app
@@ -153,8 +173,6 @@ MITFuncRetValue update_c_app(struct up_app_info *app_info)
     get_app_version(app_info->app_name, ver_str);
     if (strlen(ver_str) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
-        f_ret = MIT_RETV_FAIL;
-        goto FUNC_RET_TAG;
     }
 
     //TODO: compare the verson info to decside whethe to update the app
@@ -168,8 +186,6 @@ MITFuncRetValue update_c_app(struct up_app_info *app_info)
     /* backup the app */
     if(backup_application(app_info->app_name) != 0) {
         MITLog_DetErrPrintf("backup_application(%s) failed", app_info->app_name);
-        f_ret = MIT_RETV_FAIL;
-        goto REMOVE_LOCK_FILE_TAG;
     }
     /* kill the app */
     long long int pid = get_pid_with_comm(app_info->app_name);
@@ -207,18 +223,25 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
     while (iter) {
         MITFuncRetValue f_ret = MIT_RETV_FAIL;
         MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "APP UPDATE: TYPE=%d APP_NAME:%s", iter->app_type, iter->app_name);
+        //check the APP_CONF_PATH/app_name directory exist if not create
+        char conf_path[MAX_AB_PATH_LEN] = {0};
+        snprintf(conf_path, MAX_AB_PATH_LEN, "%s%s", APP_CONF_PATH, iter->app_name);
+        if(create_directory(conf_path) != 0) {
+            MITLog_DetErrPrintf("create_directory(%s) failed", conf_path);
+            continue;
+        }
         switch (iter->app_type) {
             case UPAPP_TYPE_C:
-                //TODO: realize the update C app
                 if((f_ret = update_c_app(iter)) != MIT_RETV_SUCCESS) {
                     MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_c_app() failed");
                 }
                 break;
             case UPAPP_TYPE_KMODULE:
-                //TODO: realize the update kernel module
+                if((f_ret = update_kmodule_app(iter)) != MIT_RETV_SUCCESS) {
+                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_kmodule_app() failed");
+                }
                 break;
             case UPAPP_TYPE_JAVA:
-                //TODO: realize the update java app
                 if((f_ret = update_java_app(iter)) != MIT_RETV_SUCCESS) {
                     MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_java_app() failed");
                 }
@@ -227,12 +250,15 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
                 MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "Unknown update app type:%d", iter->app_type);
                 break;
         }
-        //TODO: if success release the node
         if (f_ret == MIT_RETV_SUCCESS) {
             struct up_app_info *tmp = iter;
             iter = iter->next_node;
             if (tmp == app_list_head) {
                 app_list_head = pre_iter = iter;
+                if(app_list_head == NULL) {
+                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "set the restart flag update need reboot");
+                    restart_flag = 1;
+                }
             } else {
                 pre_iter->next_node = iter;
             }
@@ -245,6 +271,9 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
            iter = iter->next_node;
         }
     }
+    if(restart_flag > 0) {
+        posix_system("reboot");
+    }
     MITLog_DetLogExit
 }
 
@@ -252,6 +281,7 @@ MITFuncRetValue start_app_update_func(struct up_app_info **head)
 {
     MITLog_DetLogEnter
     *head = app_list_head;
+    restart_flag = 0;
 
     /* create a test update app */
     app_list_head = calloc(1, sizeof(struct up_app_info));
@@ -288,6 +318,17 @@ MITFuncRetValue start_app_update_func(struct up_app_info **head)
     }
     sec_node->next_node = thrid_node;
 
+    struct up_app_info *four_node = calloc(1, sizeof(struct up_app_info));
+    if (four_node == NULL) {
+        MITLog_DetErrPrintf("calloc() failed");
+    } else {
+        four_node->app_type = UPAPP_TYPE_KMODULE;
+        four_node->app_name = strdup("bcm4329");
+        four_node->new_app_path = strdup(APP_STORE_FILE_PATH"bcm4329.ko");
+        four_node->new_version = strdup("v1.0.8");
+        four_node->next_node = NULL;
+    }
+    thrid_node->next_node = four_node;
 
     MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
     ev_base = event_base_new();

@@ -27,6 +27,8 @@
  */
 #define JAVA_APP_SUFFIX                ".apk"
 
+#define KMODULE_LIB_SUFFIX             ".ko"
+
 /************ Update App Daemon Struct Definition ***************/
 typedef enum  UPAppType{
     UPAPP_TYPE_C        = 1,

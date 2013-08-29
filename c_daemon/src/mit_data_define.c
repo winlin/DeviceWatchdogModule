@@ -356,18 +356,17 @@ MITFuncRetValue write_file(const char *file_path, const char *content, size_t co
             while (file_path[--path_len] != '/') {}
             strncpy(path, file_path, path_len);
             MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "file path:%s", path);
-            int ret_t = mkdir(path, S_IRWXU|S_IRWXG|S_IRWXO);
-            if (ret_t == -1 && errno != EEXIST) {
-                MITLog_DetErrPrintf("mkdir() failed");
+            if(create_directory(path) != 0) {
+                MITLog_DetErrPrintf("create_directory() failed");
                 free(path);
                 ret = MIT_RETV_OPEN_FILE_FAIL;
                 goto FUNC_RETU_TAG;
             }
+            free(path);
             /* write info into configure file */
             fp = fopen(file_path, "w");
             if (fp == NULL) {
                 MITLog_DetErrPrintf("fopen() %s failed", file_path);
-                free(path);
                 ret = MIT_RETV_OPEN_FILE_FAIL;
                 goto FUNC_RETU_TAG;
             }
@@ -506,13 +505,9 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
     /* create the configure path for the app */
     char file_path[MAX_AB_PATH_LEN] = {0};
     snprintf(file_path, MAX_AB_PATH_LEN, "%s%s", APP_CONF_PATH, app_name);
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "file path:%s", file_path);
-    if ((access(file_path, F_OK)) != 0) {
-        int ret_t = mkdir(file_path, S_IRWXU|S_IRWXG|S_IRWXO);
-            if (ret_t == -1 && errno != EEXIST) {
-                MITLog_DetErrPrintf("mkdir() failed:%s", file_path);
-                return MIT_RETV_OPEN_FILE_FAIL;
-            }
+    if (create_directory(file_path) != 0) {
+        MITLog_DetErrPrintf("mkdir() failed:%s", file_path);
+        return MIT_RETV_OPEN_FILE_FAIL;
     }
     /* save the content into file */
     char tar_file[MAX_AB_PATH_LEN] = {0};
@@ -531,6 +526,28 @@ MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, 
     }
 
     fclose(conf_fp);
+    return MIT_RETV_SUCCESS;
+}
+
+MITFuncRetValue save_app_pid_ver_info(const char *app_name, pid_t pid, const char *version)
+{
+    if(pid > 0) {
+        /* save pid info */
+        char tmp_str[16] = {0};
+        sprintf(tmp_str, "%d", pid);
+        if(save_app_conf_info(app_name, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
+            MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", app_name, F_NAME_COMM_PID);
+            return MIT_RETV_FAIL;
+        }
+    }
+    if(version) {
+        /* save version info */
+        if(save_app_conf_info(app_name, F_NAME_COMM_VERSON, version) != MIT_RETV_SUCCESS) {
+            MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", app_name, F_NAME_COMM_VERSON);
+            return MIT_RETV_FAIL;
+        }
+    }
+
     return MIT_RETV_SUCCESS;
 }
 
@@ -726,3 +743,18 @@ pid_t start_app_with_cmd_line(const char * cmd_line)
     free(exec_line);
     return pid;
 }
+
+int create_directory(const char *dir_path)
+{
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "dir path:%s", dir_path);
+    if((access(dir_path, F_OK)) == 0) {
+        return 0;
+    }
+    int ret_t = mkdir(dir_path, S_IRWXU|S_IRWXG|S_IRWXO);
+    if (ret_t == -1 && errno != EEXIST) {
+        MITLog_DetErrPrintf("mkdir() failed:%s", dir_path);
+        return -1;
+    }
+    return 0;
+}
+

@@ -36,17 +36,11 @@ int main(int argc, const char * argv[])
     }
     MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "%s", dir);
 
-    /* save pid info */
+    /* save pid and version info */
     char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", getpid());
-    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_PID);
-        ret = -1;
-        goto CLOSE_LOG_TAG;
-    }
-    /* save verson info */
-    if(save_app_conf_info(APP_NAME_UPAPPSD, F_NAME_COMM_VERSON, VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s failed", APP_NAME_UPAPPSD F_NAME_COMM_VERSON);
+    if(save_app_pid_ver_info(APP_NAME_UPAPPSD, getpid(), VERSION_UPAPPSD) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_pid_ver_info() %s failed", APP_NAME_UPAPPSD);
         ret = -1;
         goto CLOSE_LOG_TAG;
     }

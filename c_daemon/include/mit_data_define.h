@@ -13,7 +13,7 @@
 #include <signal.h>
 
 /* The max absolutely path length. */
-#define MAX_AB_PATH_LEN                      1024
+#define MAX_AB_PATH_LEN                      512
 /* The max file name length. */
 #define MAX_F_NAME_LEN                       256
 
@@ -320,6 +320,16 @@ void get_comm_with_pid(long long int pid, char* app_comm);
 MITFuncRetValue save_app_conf_info(const char *app_name, const char *file_name, const char *content);
 
 /*
+ * Save app's configure info into APP_CONF_PATH
+ * The file will be open by flag "w".
+ * @param  app_name: the application's name
+ *         pid     : the pid of the current application
+ *                   if the pid<0, the pid won't be saved
+ *         version : the version str of the application
+ *                   if the version==NULL, the version won't be saved
+ */
+MITFuncRetValue save_app_pid_ver_info(const char *app_name, pid_t pid, const char *version);
+/*
  * Get app's verson info from APP_CONF_PATH/app_name/version.
  */
 void get_app_version(const char *app_name, char *ver_str);
@@ -373,6 +383,16 @@ int posix_system(const char *cmd_line);
  * Start a new process to execute cmd line.
  */
 pid_t start_app_with_cmd_line(const char * cmd_line);
+
+/*
+ * Check whether the target directory existed,
+ * if not the directory will be created.
+ *
+ * @param path_prefix: the prefix of the target directory
+ *        dir_name   : the name of the target directory
+ * @return 0 on success else -1 will be returned.
+ */
+int create_directory(const char *dir_path);
 
 #endif
 

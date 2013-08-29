@@ -187,16 +187,11 @@ MITFuncRetValue save_appinfo_config(pid_t monitored_pid,
         MITLog_DetErrPrintf("strdup() failed");
         return MIT_RETV_ALLOC_MEM_FAIL;
     }
-    /* save pid info */
+    /* save pid and version info */
     char tmp_str[16] = {0};
     sprintf(tmp_str, "%d", monitored_pid);
-    if(save_app_conf_info(app_name, F_NAME_COMM_PID, tmp_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", app_name, F_NAME_COMM_PID);
-        return MIT_RETV_FAIL;
-    }
-    /* save verson info */
-    if(save_app_conf_info(app_name, F_NAME_COMM_VERSON, version_str) != MIT_RETV_SUCCESS) {
-        MITLog_DetErrPrintf("save_app_conf_info() %s/%s failed", app_name, F_NAME_COMM_VERSON);
+    if(save_app_pid_ver_info(app_name, monitored_pid, version_str) != MIT_RETV_SUCCESS) {
+        MITLog_DetErrPrintf("save_app_pid_ver_info() %s failed", app_name);
         return MIT_RETV_FAIL;
     }
     return MIT_RETV_SUCCESS;

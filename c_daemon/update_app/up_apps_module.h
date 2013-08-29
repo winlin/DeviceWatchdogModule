@@ -20,7 +20,12 @@
  * The time interval to check the updated apps' list.
  * Unit is second.
  */
-#define UP_APP_DAEMON_TIME_INTERVAL         3
+#define UP_APP_DAEMON_TIME_INTERVAL    3
+
+/*
+ * The suffix of java application's name
+ */
+#define JAVA_APP_SUFFIX                ".apk"
 
 /************ Update App Daemon Struct Definition ***************/
 typedef enum  UPAppType{

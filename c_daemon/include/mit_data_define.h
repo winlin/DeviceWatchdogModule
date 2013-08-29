@@ -51,7 +51,9 @@
 /* The apps' common path */
 #define APP_COMM_PATH                  "/sdcard/bussale/"
 /* Use to store all apps file */
-#define APP_EXEC_FILE_PATH             APP_COMM_PATH"apps/"
+#define APP_STORE_FILE_PATH            APP_COMM_PATH"db_apps/"
+/* The app exec path */
+#define APP_EXEC_FILE_PATH             "/data/bussale/apps/"
 /* Use to store all apps' log files */
 #define LOG_FILE_PATH                  APP_COMM_PATH"logs/"
 /* Use to store all apps' configure files */
@@ -357,7 +359,7 @@ int replace_the_application(const char *app_name, const char *new_app_path);
  *
  * @return 0 on success else -1 will be returned.
  */
-int backup_application(const char *app_name);
+int backup_application(const char *app_file_path);
 
 /*
  * Call system() function to exec a shell cmd

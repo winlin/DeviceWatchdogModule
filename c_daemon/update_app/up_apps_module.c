@@ -20,6 +20,130 @@
 #include <event2/event-config.h>
 
 static struct up_app_info *app_list_head;
+static struct event_base *ev_base;
+
+MITFuncRetValue update_java_app(struct up_app_info *app_info)
+{
+    MITFuncRetValue f_ret = MIT_RETV_SUCCESS;
+    /* check the verson number */
+    char ver_str[30] = {0};
+    get_app_version(app_info->app_name, ver_str);
+    if (strlen(ver_str) == 0) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
+        f_ret = MIT_RETV_FAIL;
+        goto FUNC_RET_TAG;
+    }
+
+    //TODO: compare the verson info to decside whethe to update the app
+
+    /* create the update lock file */
+    if(create_update_lock_file(app_info->app_name) !=0 ) {
+        MITLog_DetErrPrintf("create_update_lock_file(%s) failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+        goto FUNC_RET_TAG;
+    }
+    /* backup the app */
+    int japp_name_len = strlen(app_info->app_name) + strlen(JAVA_APP_SUFFIX) + 1;
+    char *japp_name   = calloc(japp_name_len, sizeof(char));
+    if(japp_name == NULL) {
+        MITLog_DetErrPrintf("callloc() japp_name failed");
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    snprintf(japp_name, japp_name_len, "%s%s", app_info->app_name, JAVA_APP_SUFFIX);
+    if(backup_application(japp_name) != 0) {
+        MITLog_DetErrPrintf("backup_application(%s) failed", japp_name);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* replace the app */
+    if(replace_the_application(japp_name, app_info->new_app_path) != 0) {
+        MITLog_DetErrPrintf("replace_the_application():%s failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    free(japp_name);
+
+    /* kill the app */
+    long long int pid = get_pid_with_comm(app_info->app_name);
+    if (pid > 0 && kill((pid_t)pid, SIGKILL) < 0) {
+        MITLog_DetErrPrintf("kill() pid=%lld failed", pid);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* update the java app */
+    char upjava_cmd[MAX_AB_PATH_LEN*2] = {0};
+    snprintf(upjava_cmd, MAX_AB_PATH_LEN*2, "pm install -r %s", app_info->new_app_path);
+    if(posix_system(upjava_cmd) !=0) {
+        MITLog_DetErrPrintf("%s failed", upjava_cmd);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+
+    //TODO: start the new verson app
+    // if want to start the app we must have the cmd line
+REMOVE_LOCK_FILE_TAG:
+    /* remove the update lock file */
+    if(remove_update_lock_file(app_info->app_name) != 0) {
+        MITLog_DetErrPrintf("remove_update_lock_file():%s failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+    }
+FUNC_RET_TAG:
+    return f_ret;
+}
+
+MITFuncRetValue update_kmodule_app(struct up_app_info *app_info)
+{
+    MITFuncRetValue f_ret = MIT_RETV_SUCCESS;
+    /* check the verson number */
+    char ver_str[30] = {0};
+    get_app_version(app_info->app_name, ver_str);
+    if (strlen(ver_str) == 0) {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "get_app_version() failed");
+        f_ret = MIT_RETV_FAIL;
+        goto FUNC_RET_TAG;
+    }
+
+    //TODO: compare the verson info to decside whethe to update the app
+
+    /* create the update lock file */
+    if(create_update_lock_file(app_info->app_name) !=0 ) {
+        MITLog_DetErrPrintf("create_update_lock_file(%s) failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+        goto FUNC_RET_TAG;
+    }
+    /* backup the app */
+    if(backup_application(app_info->app_name) != 0) {
+        MITLog_DetErrPrintf("backup_application(%s) failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* kill the app */
+    long long int pid = get_pid_with_comm(app_info->app_name);
+    if (pid > 0 && kill((pid_t)pid, SIGKILL) < 0) {
+        MITLog_DetErrPrintf("kill() pid=%lld failed", pid);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+    /* replace the app */
+    if(replace_the_application(app_info->app_name, app_info->new_app_path) != 0) {
+        MITLog_DetErrPrintf("replace_the_application():%s failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+        goto REMOVE_LOCK_FILE_TAG;
+    }
+
+    //TODO: start the new verson app
+    // if want to start the app we must have the cmd line
+
+REMOVE_LOCK_FILE_TAG:
+    /* remove the update lock file */
+    if(remove_update_lock_file(app_info->app_name) != 0) {
+        MITLog_DetErrPrintf("remove_update_lock_file():%s failed", app_info->app_name);
+        f_ret = MIT_RETV_FAIL;
+    }
+FUNC_RET_TAG:
+    return f_ret;
+}
 
 MITFuncRetValue update_c_app(struct up_app_info *app_info)
 {
@@ -82,6 +206,7 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
     struct up_app_info *pre_iter = NULL;
     while (iter) {
         MITFuncRetValue f_ret = MIT_RETV_FAIL;
+        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "APP UPDATE: TYPE=%d APP_NAME:%s", iter->app_type, iter->app_name);
         switch (iter->app_type) {
             case UPAPP_TYPE_C:
                 //TODO: realize the update C app
@@ -94,6 +219,9 @@ void timeout_cb(evutil_socket_t fd, short ev_type, void *data)
                 break;
             case UPAPP_TYPE_JAVA:
                 //TODO: realize the update java app
+                if((f_ret = update_java_app(iter)) != MIT_RETV_SUCCESS) {
+                    MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "update_java_app() failed");
+                }
                 break;
             default:
                 MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "Unknown update app type:%d", iter->app_type);
@@ -133,7 +261,7 @@ MITFuncRetValue start_app_update_func(struct up_app_info **head)
     }
     app_list_head->app_type = UPAPP_TYPE_C;
     app_list_head->app_name = strdup("app1");
-    app_list_head->new_app_path = strdup("/sdcard/db_app/app1");
+    app_list_head->new_app_path = strdup(APP_STORE_FILE_PATH"app1");
     app_list_head->new_version = strdup("v1.0.3");
     app_list_head->next_node = NULL;
     struct up_app_info *sec_node = calloc(1, sizeof(struct up_app_info));
@@ -142,14 +270,27 @@ MITFuncRetValue start_app_update_func(struct up_app_info **head)
     } else {
         sec_node->app_type = UPAPP_TYPE_C;
         sec_node->app_name = strdup("app1");
-        sec_node->new_app_path = strdup("/sdcard/db_app/app1");
+        sec_node->new_app_path = strdup(APP_STORE_FILE_PATH"app1");
         sec_node->new_version = strdup("v1.0.3");
         sec_node->next_node = NULL;
     }
     app_list_head->next_node = sec_node;
 
+    struct up_app_info *thrid_node = calloc(1, sizeof(struct up_app_info));
+    if (thrid_node == NULL) {
+        MITLog_DetErrPrintf("calloc() failed");
+    } else {
+        thrid_node->app_type = UPAPP_TYPE_JAVA;
+        thrid_node->app_name = strdup("com.example.posjnitest");
+        thrid_node->new_app_path = strdup(APP_STORE_FILE_PATH"com.example.posjnitest.apk");
+        thrid_node->new_version = strdup("v1.0.8");
+        thrid_node->next_node = NULL;
+    }
+    sec_node->next_node = thrid_node;
+
+
     MITFuncRetValue func_ret = MIT_RETV_SUCCESS;
-    struct event_base *ev_base = event_base_new();
+    ev_base = event_base_new();
     if (ev_base == NULL) {
         MITLog_DetErrPrintf("event_base_new() failed");
         func_ret = MIT_RETV_FAIL;
@@ -178,7 +319,7 @@ void free_up_app_list(struct up_app_info *head)
     MITLog_DetLogEnter
     struct up_app_info *iter = head;
     struct up_app_info *tmp = NULL;
-    while (iter != NULL) {
+    while (iter) {
         tmp = iter;
         iter = iter->next_node;
         free(tmp->app_name);

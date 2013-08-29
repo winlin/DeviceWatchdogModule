@@ -27,7 +27,7 @@ public class MainActivity extends Activity {
         int funcRet = nu.saveAppInfoConfig(Process.myPid(),  
         									"com.example.posjnitest", 
         									"am start -n com.example.posjnitest/com.example.posjnitest.MainActivity", 
-        									"v1.0.1");
+        									"v1.0.8");
         if(funcRet == 0) {
         	// init the socket  
         	int mainSocketID = nu.initUDPSocket();

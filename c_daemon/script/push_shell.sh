@@ -7,7 +7,7 @@
 #done
 
 BS_LOCAL_PATH="/sdcard/bussale/apps/"
-BS_ANDROID_PATH="/data/apps/"
+BS_ANDROID_PATH="/data/bussale/apps/"
 
 dest="local"
 while getopts "da:" option

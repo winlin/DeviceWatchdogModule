@@ -39,6 +39,8 @@ static struct sockaddr_in addr_self;
 
 struct wd_configure* get_wd_configure(void)
 {
+    long long int system_max_pid  = get_sys_max_pid();
+
     struct wd_configure *wd_conf = calloc(1, sizeof(struct wd_configure));
     if (wd_conf == NULL) {
         MITLog_DetPuts(MITLOG_LEVEL_ERROR, "calloc() struct wd_configure failed");
@@ -86,7 +88,6 @@ struct wd_configure* get_wd_configure(void)
     while ((read = fscanf(conf_fp, "%[^\n]", line)) != EOF) {
         /* eat the \n char */
         fgetc(conf_fp);
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Read line: %d : %s", read, line);
         /* strip the space char include:space, \f, \n, \r, \t, \v */
         read = strip_string_space(&line);
         /* ignore the empty line */
@@ -104,7 +105,6 @@ struct wd_configure* get_wd_configure(void)
         str = line;
         char *key_name = NULL;
         token = strtok_r(str, CONF_KEY_VALUE_DIVIDE_STR, &tmpstr);
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "key_name token:%s", token);
         if (token) {
             key_name = strdup(token);
             if (key_name == NULL) {
@@ -119,7 +119,6 @@ struct wd_configure* get_wd_configure(void)
 
         char *value_str = NULL;
         token = strtok_r(NULL, CONF_KEY_VALUE_DIVIDE_STR, &tmpstr);
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "value_str token:%s", token);
         if (token) {
             value_str = strdup(token);
             if (value_str == NULL) {
@@ -172,7 +171,7 @@ struct wd_configure* get_wd_configure(void)
                 goto FREE_LINE_TAG;
             }
             // if the app is running get the pid and set the app_last_feed_time
-            node->app_pid = (pid_t)get_pid_with_comm(node->app_name);
+            node->app_pid = (pid_t)get_pid_with_comm(node->app_name, system_max_pid);
             if (node->app_pid > 0) {
                 MITLog_DetPrintf(MITLOG_LEVEL_COMMON,
                                  "get the app's pid:%d and update the app_last_feed_time",
@@ -699,7 +698,7 @@ void start_the_monitor_app(struct monitor_app_info *app_info)
          * then kill() will be called.
          */
         get_comm_with_pid(app_info->app_pid, app_comm);
-        if (reverse_compare_string(app_info->app_name, app_comm) == 0) {
+        if (check_substring(app_info->app_name, app_comm) == 0) {
             MITLog_DetPrintf(MITLOG_LEVEL_ERROR,
                              "%s with pid=%d will be killed",
                              app_info->app_name,
@@ -795,7 +794,7 @@ MITFuncRetValue start_libevent_udp_server(struct wd_configure *wd_conf)
     if (wd_conf == NULL) {
         return MIT_RETV_PARAM_ERROR;
     }
-    wd_configure = wd_conf;
+    wd_configure    = wd_conf;
 
     int socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (socket_fd < 0) {

@@ -1,10 +1,10 @@
 WD_PROGNAME=dev_watchdog
-UPAPP_PROGNAME=update_apps_daemon
+INSTALLER_PROGNAME=installer_daemon
 APP_PROGNAME=app1
 
-#CC=gcc
-CC=arm-linux-androideabi-gcc
-CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
+CC=gcc
+#CC=arm-linux-androideabi-gcc
+#CROSS_INCLUDE_PATH=/home/gtliu/AndroidSDK/android_libevent
 
 ifeq ($(CC),gcc)
 	INCLUDES= -I.
@@ -30,7 +30,7 @@ MAKE= make
 export
 
 
-all: $(COMM_FILE_TAR) $(WD_PROGNAME) $(APP_PROGNAME) $(UPAPP_PROGNAME)
+all: $(COMM_FILE_TAR) $(WD_PROGNAME) $(APP_PROGNAME) $(INSTALLER_PROGNAME)
 
 $(COMM_FILE_TAR):
 	$(MAKE) -C src
@@ -41,16 +41,16 @@ $(WD_PROGNAME): $(COMM_FILE_TAR)
 $(APP_PROGNAME): $(COMM_FILE_TAR)
 	$(MAKE) -C monitor_app
 
-$(UPAPP_PROGNAME): $(COMM_FILE_TAR)
-	$(MAKE) -C update_app
+$(INSTALLER_PROGNAME): $(COMM_FILE_TAR)
+	$(MAKE) -C installer_daemon
 
 install:
 	$(MAKE) install -C monitor_app
 	$(MAKE) install -C device_watchdog
-	$(MAKE) install -C update_app
+	$(MAKE) install -C installer_daemon
 clean:
 	 $(MAKE) clean -C src
 	 $(MAKE) clean -C monitor_app
 	 $(MAKE) clean -C device_watchdog
-	 $(MAKE) clean -C update_app
+	 $(MAKE) clean -C installer_daemon
 

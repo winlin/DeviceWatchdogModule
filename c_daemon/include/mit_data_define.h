@@ -9,8 +9,15 @@
 #define MIT_DATA_DEFINE_H
 
 #include <string.h>
-#include <sys/types.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
 #include <signal.h>
+
+#define UDP_IP_SER         "127.0.0.1"
+#define UDP_IP_CLIENT      "127.0.0.1"
 
 /* The max absolutely path length. */
 #define MAX_AB_PATH_LEN                      512
@@ -36,13 +43,13 @@
  * If app doesn't feed for DEFAULT_MAX_MISSED_FEED_TIMES*FEED_PERIOD seconds,
  * watchdog will restart the app.
  */
-#define DEFAULT_MAX_MISSED_FEED_TIMES        3
+#define DEFAULT_MAX_MISSED_FEED_TIMES        5
 
 /*
  * If the app has sent MAX_MISS_FEEDBACK_TIMES feed packages without watchdog feeding back,
  * the app will start to send reigister packages.
  */
-#define MAX_MISS_FEEDBACK_TIMES              (DEFAULT_MAX_MISSED_FEED_TIMES - 1)
+#define MAX_MISS_FEEDBACK_TIMES              (DEFAULT_MAX_MISSED_FEED_TIMES - 2)
 
 /*
  * The path must end with '/'.
@@ -263,55 +270,37 @@ void *wd_pg_return_new(int *pg_len,
  */
 struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len);
 
-/********************** Tools Function ************************/
 /*
- * Strip space from string both on head and tail
- * If there is space the memory will be realloc.
+ * Monitored application register to watchdog.
  *
- * @return the new string lenght will return.
+ * @param fd             : the socket of the monitored app
+ *        period         : the feed period by seconds
+ *        thread_id      : the feed thread identifier
+ *        addr_server    : watchdog's address
+ *        feed_configure : the monitored app's configuration
  */
-size_t strip_string_space(char **tar_str);
+void monapp_send_register_pg(int fd,
+                         int period,
+                         int thread_id,
+                         struct sockaddr_in* addr_server,
+                         struct feed_thread_configure *feed_configure);
 
 /*
- * Compare cmd_name is equal in two cmd_lines.
+ * Monitored application send package to watchdog.
  *
- * @param f_cmdline: first cmd_line string
- * @param s_cmdline: second cmd_line string
- * @return  On equal 0 will be returned
- *          else -1 will be returned.
+ * @param fd             : the socket of the monitored app
+ *        period         : the feed period by seconds
+ *        pid            : the monitored app's pid
+ *        thread_id      : the feed thread identifier
+ *        cmd            : WD_PG_CMD_FEED/WD_PG_CMD_UNREGISTER
+ *        tar_addr       : watchdog's address
  */
-int compare_two_cmd_line(const char *f_cmdline, const char *s_cmdline);
-
-/*
- * Write content into file_path.
- * The file_path file will be open with "w" flag.
- *
- * @param file_path: the absolute file path, ex: /tmp/watchdog/watchdog.conf
- * @param content:   the content will be written into file
- * @param cont_len   the lenght of content
- */
-MITFuncRetValue write_file(const char *file_path, const char *content, size_t cont_len);
-
-/*
- * Get application's pid whoes name is "comm", just app's name without arguments.
- * @return On success the pid of the app will be returned.
- *         If the app isn't executing 0 will be returned.
- */
-long long int get_pid_with_comm(const char *comm);
-
-/*
- * Compare two string from end to start, if one is another one's substring.
- *
- * @return 0 will be returned else -1 will be returned.
- */
-int reverse_compare_string(const char *str_one, const char *str_two);
-
-/*
- * Get application's comm whoes pid is "pid".
- *
- * @return On success the comm of the pid will be set into app_comm.
- */
-void get_comm_with_pid(long long int pid, char* app_comm);
+void monapp_send_action_pg(int fd,
+                       short period,
+                       int pid,
+                       int thread_id,
+                       MITWatchdogPgCmd cmd,
+                       struct sockaddr_in *tar_addr);
 
 /*
  * Save app's configure info into APP_CONF_PATH
@@ -370,6 +359,63 @@ int replace_the_application(const char *app_name, const char *new_app_path);
  * @return 0 on success else -1 will be returned.
  */
 int backup_application(const char *app_file_path);
+
+
+/********************** Tools Function ************************/
+/*
+ * Strip space from string both on head and tail
+ * If there is space the memory will be realloc.
+ *
+ * @return the new string lenght will return.
+ */
+size_t strip_string_space(char **tar_str);
+
+/*
+ * Compare cmd_name is equal in two cmd_lines.
+ *
+ * @param f_cmdline: first cmd_line string
+ * @param s_cmdline: second cmd_line string
+ * @return  On equal 0 will be returned
+ *          else -1 will be returned.
+ */
+int compare_two_cmd_line(const char *f_cmdline, const char *s_cmdline);
+
+/*
+ * Write content into file_path.
+ * The file_path file will be open with "w" flag.
+ *
+ * @param file_path: the absolute file path, ex: /tmp/watchdog/watchdog.conf
+ * @param content:   the content will be written into file
+ * @param cont_len   the lenght of content
+ */
+MITFuncRetValue write_file(const char *file_path, const char *content, size_t cont_len);
+
+/*
+ * Get application's pid whoes name is "comm", just app's name without arguments.
+ * @return On success the pid of the app will be returned.
+ *         If the app isn't executing 0 will be returned.
+ */
+long long int get_pid_with_comm(const char *comm, long long int sys_max_pid);
+
+/*
+ * Get the max process id from linux proc file system
+ *
+ */
+long long int get_sys_max_pid(void);
+
+/*
+ * Check whether one is another one's substring.
+ *
+ * @return 0 will be returned on success else -1 will be returned.
+ */
+int check_substring(const char *str_one, const char *str_two);
+
+/*
+ * Get application's comm whoes pid is "pid".
+ *
+ * @return On success the comm of the pid will be set into app_comm.
+ */
+void get_comm_with_pid(long long int pid, char* app_comm);
 
 /*
  * Call system() function to exec a shell cmd

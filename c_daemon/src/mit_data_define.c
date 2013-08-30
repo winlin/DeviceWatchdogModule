@@ -288,6 +288,73 @@ struct wd_pg_return *wd_pg_return_unpg(void *pg, int pg_len)
     return pg_ret_feed;
 }
 
+void monapp_send_register_pg(int fd,
+                         int period,
+                         int thread_id,
+                         struct sockaddr_in* addr_server,
+                         struct feed_thread_configure *feed_configure)
+{
+    // read from watchdog port file to get port
+    FILE *fp = fopen(CONF_PATH_WATCHD F_NAME_COMM_PORT, "r");
+    if (fp == NULL) {
+        return;
+    }
+    int wd_port = 0;
+    int scan_num = fscanf(fp, "%d", &wd_port);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() failed");
+    }
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get Watchdog port:%d", wd_port);
+    if (wd_port > 0) {
+        memset(addr_server, 0, sizeof(struct sockaddr_in));
+        addr_server->sin_family      = AF_INET;
+        addr_server->sin_port        = htons(wd_port);
+        addr_server->sin_addr.s_addr = inet_addr(UDP_IP_SER);
+
+        int pg_len = 0;
+        void *pg_reg = wd_pg_register_new(&pg_len, period, thread_id, feed_configure);
+        if (pg_reg > 0) {
+            ssize_t ret = sendto(fd, pg_reg,
+                                 (size_t)pg_len, 0,
+                                 (struct sockaddr *)addr_server,
+                                 sizeof(struct sockaddr_in));
+            if (ret < 0) {
+                MITLog_DetErrPrintf("sendto() failed");
+            }
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "register pg len:%d", pg_len);
+            free(pg_reg);
+        } else {
+            MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "wd_pg_register_new() failed");
+        }
+    } else {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "Get Watchdog port failed");
+    }
+}
+
+void monapp_send_action_pg(int fd,
+                       short period,
+                       int pid,
+                       int thread_id,
+                       MITWatchdogPgCmd cmd,
+                       struct sockaddr_in *tar_addr)
+{
+    int pg_len = 0;
+    void *action_pg = wd_pg_action_new(&pg_len, period, pid, thread_id, cmd);
+    if (action_pg) {
+        ssize_t ret = sendto(fd, action_pg,
+                             (size_t)pg_len, 0,
+                             (struct sockaddr *)tar_addr,
+                             sizeof(struct sockaddr_in));
+        if (ret < 0) {
+            MITLog_DetErrPrintf("sendto() failed");
+        }
+        free(action_pg);
+    } else {
+        MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "wd_pg_action_new() failed");
+    }
+}
+
+
 size_t strip_string_space(char **tar_str)
 {
     char *src_str = *tar_str;
@@ -300,7 +367,6 @@ size_t strip_string_space(char **tar_str)
         ++t_space;
     }
     if (t_space || h_space) {
-        MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "head space num:%d  tail space num:%d", h_space, t_space);
         size_t len = src_len-h_space-t_space + 1;
         if (len > 1) {
             *tar_str = calloc(len, sizeof(char));
@@ -385,33 +451,14 @@ FUNC_RETU_TAG:
     return ret;
 }
 
-long long int get_pid_with_comm(const char *comm)
+long long int get_pid_with_comm(const char *comm, long long int sys_max_pid)
 {
     if (comm == NULL || strlen(comm) == 0) {
         MITLog_DetPrintf(MITLOG_LEVEL_ERROR, "paramater can't be empty");
         return 0;
     }
-    long long int app_pid = 0;
-    // get the system max pid
-    if ((access(SYS_PROC_MAX_PID_FILE, F_OK)) != 0) {
-        MITLog_DetErrPrintf("access() %s failed", SYS_PROC_MAX_PID_FILE);
-        return app_pid;
-    }
-    FILE *max_pid_file = fopen(SYS_PROC_MAX_PID_FILE, "r");
-    long long int sys_max_pid = 0;
-    if (max_pid_file == NULL) {
-        MITLog_DetErrPrintf("fopen() %s falied", SYS_PROC_MAX_PID_FILE);
-        return app_pid;
-    }
-    int scan_num = fscanf(max_pid_file, "%lld", &sys_max_pid);
-    if (scan_num <= 0) {
-        MITLog_DetErrPrintf("fscanf() failed");
-        fclose(max_pid_file);
-        return app_pid;
-    }
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Find the comm:%s with sys_max_pid=%lld", comm, sys_max_pid);
 
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get System Max PID:%lld", sys_max_pid);
-    fclose(max_pid_file);
     for (long long int i=1; i <= sys_max_pid; ++i) {
         char app_comm_path[60] = {0};
         sprintf(app_comm_path, "%s%lld/%s", SYS_PROC_PATH, i, SYS_APP_COMM_NAME);
@@ -427,43 +474,58 @@ long long int get_pid_with_comm(const char *comm)
             }
         }
         char app_comm[60] = {0};
-        scan_num = fscanf(comm_fp, "%s", app_comm);
+        int scan_num = fscanf(comm_fp, "%s", app_comm);
         if (scan_num <= 0) {
             MITLog_DetErrPrintf("fscanf() %s failed", app_comm_path);
         }
         fclose(comm_fp);
-        if (strcmp(comm, app_comm) == 0) {
-            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Find the target app pid:%lld", i);
+        if (check_substring(comm, app_comm) == 0) {
+            MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Find the %s pid:%lld", comm, i);
             return i;
         }
     }
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Can't find the %s pid", comm);
     return 0;
 }
 
-int reverse_compare_string(const char *str_one, const char *str_two)
+long long int get_sys_max_pid(void)
 {
+    long long int sys_max_pid = 0;
+    // get the system max pid
+    if ((access(SYS_PROC_MAX_PID_FILE, F_OK)) != 0) {
+        MITLog_DetErrPrintf("access() %s failed", SYS_PROC_MAX_PID_FILE);
+        return sys_max_pid;
+    }
+    FILE *max_pid_file = fopen(SYS_PROC_MAX_PID_FILE, "r");
+    if (max_pid_file == NULL) {
+        MITLog_DetErrPrintf("fopen() %s falied", SYS_PROC_MAX_PID_FILE);
+        return sys_max_pid;
+    }
+    int scan_num = fscanf(max_pid_file, "%lld", &sys_max_pid);
+    if (scan_num <= 0) {
+        MITLog_DetErrPrintf("fscanf() failed");
+        fclose(max_pid_file);
+        return sys_max_pid;
+    }
 
+    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "Get System Max PID:%lld", sys_max_pid);
+    fclose(max_pid_file);
+
+    return sys_max_pid;
+}
+
+int check_substring(const char *str_one, const char *str_two)
+{
     const char *shorter_str = str_one;
     const char *longer_str  = str_two;
     if(strlen(str_one) > strlen(str_two)) {
         shorter_str = str_two;
         longer_str  = str_one;
     }
-    int smaller = strlen(shorter_str);
-    int longer  = strlen(longer_str);
-    if(smaller == 0) {
-        return -1;
+    if(strstr(longer_str, shorter_str)) {
+        return 0;
     }
-    int i = 1;
-    while(i<=smaller) {
-        if(shorter_str[smaller-i] == longer_str[longer-i]) {
-            ++i;
-            continue;
-        } else {
-            return -1;
-        }
-    }
-    return 0;
+    return -1;
 }
 
 void get_comm_with_pid(long long int pid, char* app_comm)
@@ -746,7 +808,6 @@ pid_t start_app_with_cmd_line(const char * cmd_line)
 
 int create_directory(const char *dir_path)
 {
-    MITLog_DetPrintf(MITLOG_LEVEL_COMMON, "dir path:%s", dir_path);
     if((access(dir_path, F_OK)) == 0) {
         return 0;
     }
